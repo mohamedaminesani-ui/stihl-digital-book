@@ -1,0 +1,23 @@
+# Tests du moteur et de l'API à chaque envoi sur main : génération des fiches d'exemple (PPTX + PDF) et API avec une D1 simulée.
+# Aucune donnée en ligne n'est lue ni modifiée.
+name: Tests
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2 (épinglé par empreinte)
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af  # v4.1.0
+        with:
+          node-version: 22
+      - name: Générer les fiches d'exemple
+        run: node tests/build.mjs out
+      - name: Tester l'API
+        run: node tests/worker.test.mjs
