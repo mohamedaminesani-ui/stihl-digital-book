@@ -123,8 +123,8 @@ function viewLibrary(q = new URLSearchParams()) {
       <select id="ft" aria-label="Technologie">${opt("", "Toutes technologies", f.tech)}${(S.cat.structure?.techs || []).map((t) => opt(t.id, t.fr, f.tech)).join("")}</select>
       <select id="fs" aria-label="Statut">${opt("", "Tous les statuts", f.st)}${Object.entries(STATUS).map(([k, v]) => opt(k, v, f.st)).join("")}</select>
     </form>
-    ${all.length ? (list.length ? `<p class="muted">${list.length} book(s)</p><ul class="books">${list.map((b) => card(b)).join("")}</ul>` : `<p class="empty">Aucun book ne correspond à ces filtres.</p>`) : `<p class="empty">Aucun book pour l'instant. Crée le premier avec « Nouveau book », ou copie un exemple ci-dessous.</p>`}
-    <h2>Exemples</h2><ul class="books">${S.samples.map((s) => card(s, true)).join("")}</ul>`;
+    ${all.length ? (list.length ? `<p class="muted">${list.length} book(s)</p><ul class="books">${list.map((b) => card(b)).join("")}</ul>` : `<p class="empty">Aucun book ne correspond à ces filtres.</p>`) : `<p class="empty">Aucun book pour l'instant. Crée le premier avec « Nouveau book ».</p>`}
+    ${S.api.mode === "demo" ? `<h2>Exemples</h2><ul class="books">${S.samples.map((s) => card(s, true)).join("")}</ul>` : ""}`;
   $("btnNew").onclick = () => newBookDialog();
   const go = () => { const p = new URLSearchParams(); for (const [k, id] of [["q", "fq"], ["f", "ff"], ["t", "ft"], ["s", "fs"]]) if ($(id).value) p.set(k, $(id).value); history.replaceState(null, "", "#/books" + (p.toString() ? "?" + p : "")); viewLibrary(p); };
   $("flt").onchange = go; $("fq").oninput = () => { clearTimeout(go.t); go.t = setTimeout(() => { go(); const i = $("fq"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 300); };
