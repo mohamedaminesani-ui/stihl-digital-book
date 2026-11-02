@@ -12,8 +12,12 @@
 </head>
 <body>
 <header class="hd"><div class="wrap top">
-  <img class="logo" src="template/logo.png" alt="STIHL" width="92" height="40">
+  <a href="#/" class="home" aria-label="Bibliothèque des books"><img class="logo" src="template/logo.png" alt="STIHL" width="92" height="40"></a>
   <div class="t"><b>Digital Book Builder</b><span id="mode"></span></div>
+  <nav class="nav" aria-label="Navigation">
+    <a href="#/" data-nav="books">Books</a>
+    <a href="#/shared" data-nav="shared">Blocs partagés</a>
+  </nav>
 </div></header>
 
 <main id="main" class="wrap">
@@ -26,28 +30,10 @@
       <p id="loginErr" class="err" role="alert"></p>
     </form>
   </section>
-
-  <section id="app" hidden>
-    <div class="bar">
-      <label class="field"><span>Book</span><select id="bookSel"></select></label>
-      <label class="field small"><span>Langue</span><select id="langSel"><option value="fr">FR</option><option value="en">EN</option></select></label>
-      <div class="actions">
-        <button class="btn primary" id="btnPptx" type="button">Exporter le PPTX</button>
-        <button class="btn" id="btnPdf" type="button">Exporter le PDF</button>
-      </div>
-    </div>
-    <p id="status" class="status" role="status" aria-live="polite"></p>
-
-    <div class="grid">
-      <aside class="qc" aria-labelledby="qcTitle">
-        <h2 id="qcTitle">Contrôle qualité</h2>
-        <ol id="pagesList" class="pages"></ol>
-        <div id="qcList"></div>
-      </aside>
-      <div id="preview" class="preview" aria-label="Aperçu des pages"></div>
-    </div>
-  </section>
+  <div id="view"></div>
 </main>
+<dialog id="dlg" aria-labelledby="dlgTitle"><div id="dlgBody"></div></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

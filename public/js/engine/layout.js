@@ -128,7 +128,7 @@ export function buildBook({ book, catalogue, measure, imageInfo }) {
 
   if (!machines.length) issue("error", 1, "machines", "Aucune machine dans ce book.");
   if (machines.length > GRID.specs.maxModels) issue("error", 1, "caractéristiques", `${machines.length} machines : 4 au maximum par fiche.`);
-  for (const m of machines) if (m.source !== "catalogue") issue("warn", 1, "machines", `${m.name} n'est pas dans le Catalogue Builder : ses caractéristiques ne sont pas vérifiées par le catalogue.`);
+  for (const m of machines) if (m.source === "book") issue("warn", 1, "machines", `${m.name} n'est pas dans le Catalogue Builder : caractéristiques saisies dans le book, non vérifiées par le catalogue.`);
 
   // ================= PAGE 1 · Présentation
   {
@@ -302,7 +302,7 @@ export function buildBook({ book, catalogue, measure, imageInfo }) {
   p2.push({ title: t.preDelivery, cols: [GRID.checklist.w], head: headRow([t.checklist], "ctr"),
     rows: fill(book.checklist, BLANK_ROWS.checklist, (s) => bodyRow([`- ${s}`])).map((r) => r || blankRow(1)),
     side: (page, y, h) => { const P = GRID.checklist.photo; if (ckPhoto) image(page, "photo pré-livraison", ckPhoto, P.x, y, P.w, Math.min(P.h, Math.max(h, 30))); } });
-  flowPages("apres-vente", p2);
+  if (!book.hide?.apresVente) flowPages("apres-vente", p2);
 
   // page 3 · accessoires et calendrier
   const C = GRID.calendar;
@@ -312,7 +312,7 @@ export function buildBook({ book, catalogue, measure, imageInfo }) {
       ...Array.from({ length: 12 }, () => ({ paras: [para([], { size: STYLE.calBody.size })] })),
     ] }));
   const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
-  flowPages("accessoires", [
+  if (!book.hide?.accessoires) flowPages("accessoires", [
     { title: t.accessories, cols: [90, 60, 30], head: headRow([t.articleNo, t.description, t.model]),
       rows: fill(book.accessories, BLANK_ROWS.accessories, (r) => bodyRow([r.ref, r.desc, r.model])).map((r) => r || blankRow(3)) },
     { title: t.calendar, cols: [C.firstCol, ...months.map(() => C.monthW)], border: gridBorders,
@@ -320,9 +320,10 @@ export function buildBook({ book, catalogue, measure, imageInfo }) {
       rows: calRows },
   ]);
 
-  if (!(book.maintenance || []).length) issue("info", 2, "maintenance", "Intervalles de maintenance vides (à remplir).");
-  if (!(book.parts || []).length) issue("info", 2, "pièces", "Pièces de rechange vides (à remplir).");
-  if (!(book.accessories || []).length) issue("info", 3, "accessoires", "Accessoires vides (à remplir).");
+  if (!book.hide?.apresVente && !(book.maintenance || []).length) issue("info", 2, "maintenance", "Intervalles de maintenance vides (à remplir).");
+  if (!book.hide?.apresVente && !(book.parts || []).length) issue("info", 2, "pièces", "Pièces de rechange vides (à remplir).");
+  if (!book.hide?.accessoires && !(book.accessories || []).length) issue("info", pages.length, "accessoires", "Accessoires vides (à remplir).");
+  for (const m of machines) if (m.source === "missing") issue("error", 1, "machines", `${m.name} n'existe plus dans le Catalogue Builder.`);
   return { pages, issues, page: PAGE };
 }
 

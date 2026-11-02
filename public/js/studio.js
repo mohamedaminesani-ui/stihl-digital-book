@@ -25,6 +25,7 @@ const bytesOf = async (url) => {
 export function urlFor(key) {
   if (!key) return null;
   if (key === "@logo") return "template/logo.png";
+  if (key.startsWith("data:") || key.startsWith("blob:")) return key;
   if (key.startsWith("cat:")) return "/cat-img/" + key.slice(4);
   if (key.startsWith("img/")) return "/" + key;
   return "samples/" + key;
@@ -63,6 +64,7 @@ export async function createStudio() {
   }
 
   return {
+    urlFor,
     async build(book, catalogue) {
       await Promise.all(keysOf(book).map(loadImage));
       return buildBook({ book, catalogue, measure: F.measure, imageInfo: (k) => images.get(k) || null });

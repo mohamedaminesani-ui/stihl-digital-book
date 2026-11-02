@@ -17,15 +17,21 @@ Règles du moteur :
 - Tableaux trop longs (pages 2 et 3) : texte réduit à 9,5 puis 9 pt pour tenir sur la page, sinon page « (suite) » automatique.
 - Aucune valeur technique inventée : une valeur absente du catalogue reste vide et est signalée.
 
+## Utilisation
+- **Books** : la bibliothèque. « Nouveau book » : 1 à 4 machines du Catalogue Builder (même famille, même technologie), ou une machine hors catalogue (machines 2026 ou « uniquement en DIGIBOOK »). Les exemples se copient dans « Mes books ».
+- **Éditeur** : un formulaire par bloc (machines et caractéristiques, fonction spécifique, cibles / applications / argus, accessoires, page 2, page 3), aperçu en direct à côté (onglets Contenu / Aperçu / Contrôle sur téléphone). Valeurs du catalogue verrouillées ; tableaux éditables avec « Coller depuis Excel » ; photos par glisser-déposer (2400 px max., transparence PNG gardée) ; pages 2 et 3 masquables.
+- **Statuts** Brouillon / À valider / Validé (« Validé » refusé s'il reste un défaut bloquant), historique avec restauration, alerte « modifications non enregistrées », anti-écrasement, duplication, copie FR → EN à traduire.
+- **Blocs partagés** : maintenance 4T / 2T / batterie, recommandations batterie, consommables, EPI. Modifiés une fois, repris dans tous les books qui les utilisent.
+
 ## Données
 - **Caractéristiques, familles, photos produit** : lues dans la base du Catalogue Builder (D1 `catalogue-2027`, R2 `catalogue-2027-photos`) via les bindings `CATALOGUE` et `CAT_PHOTOS`, en lecture seule.
 - **Books, blocs partagés, historique** : D1 `digital-book`, photos R2 `digital-book-photos`. Chaque enregistrement envoie la version lue (409 en cas de conflit, rien n'est écrasé) ; l'historique garde les versions précédentes.
 
 ## Arborescence
 - `src/worker.js` — API Cloudflare Worker (session, catalogue en lecture, books versionnés, photos).
-- `public/` — le site, sans compilation : `index.html`, `js/app.js` (étape 2 : machine pilote, aperçu, contrôle qualité, exports), `js/studio.js` (liaison navigateur), `js/engine/` (moteur), `template/fiche.pptx`, `fonts/`, `vendor/` (pdf-lib 1.17.1, fontkit 1.1.1, fflate 0.8.2), `samples/` (exemples de démonstration).
+- `public/` — le site, sans compilation : `index.html`, `js/app.js` (bibliothèque, éditeur, blocs partagés), `js/model.js` (book, blocs partagés, résolution), `js/api.js` (API ou mode démonstration), `js/studio.js` (liaison navigateur), `js/engine/` (moteur), `template/fiche.pptx`, `fonts/`, `vendor/` (pdf-lib 1.17.1, fontkit 1.1.1, fflate 0.8.2), `samples/` (exemples de démonstration).
 - `tools/make_template.py` — reconstruit `template/fiche.pptx` à partir d'une fiche d'origine.
-- `tests/` — `build.mjs` (exemples PPTX + PDF), `parity.py` (preuve de parité), `worker.test.mjs` (API), `e2e.cjs` (navigateur, mobile et ordinateur).
+- `tests/` — `build.mjs` (exemples PPTX + PDF), `parity.py` (preuve de parité), `worker.test.mjs` (API), `e2e.cjs` et `e2e-editor.cjs` (navigateur, mobile et ordinateur).
 
 ## Tests
 ```bash

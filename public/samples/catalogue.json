@@ -1,5 +1,5 @@
 {
- "_note": "Extrait de la base D1 catalogue-2027 (lecture seule) le 02/11/2026 — familles utilisées par les tests.",
+ "_note": "Démonstration : extrait de la base D1 catalogue-2027 (02/11/2026), machines sans caractéristiques comme dans la base.",
  "structure": {
   "techs": [
    {
@@ -305,5 +305,37 @@
     ]
    }
   ]
- }
+ },
+ "machines": [
+  {
+   "id": "msa-220-1",
+   "name": "MSA 220.1",
+   "family": "chainsaw",
+   "tech": "battery",
+   "specs": {},
+   "images": {
+    "main": null
+   }
+  },
+  {
+   "id": "gta-20",
+   "name": "GTA 20",
+   "family": "chainsaw",
+   "tech": "battery",
+   "specs": {},
+   "images": {
+    "main": null
+   }
+  },
+  {
+   "id": "gta-30",
+   "name": "GTA 30",
+   "family": "chainsaw",
+   "tech": "battery",
+   "specs": {},
+   "images": {
+    "main": null
+   }
+  }
+ ]
 }
