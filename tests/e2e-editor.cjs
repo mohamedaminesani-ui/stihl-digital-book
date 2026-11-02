@@ -48,7 +48,9 @@ const ok = (c, m) => { console.log((c ? "OK   " : "ÉCHEC ") + m); if (!c) proce
   ok((await p.$$eval(".sheet img", (a) => a.length)) >= 2, "photo envoyée et visible dans l'aperçu");
   await p.click("#edSave"); await p.waitForTimeout(300);
   // 3. bloc partagé batterie
-  await p.goto(URL + "#/shared"); await p.click("[data-shsave=battery-reco]"); await p.waitForTimeout(300);
+  await p.goto(URL + "#/shared"); await p.waitForSelector("[data-shp^='maint-4t.0.op']");
+  ok((await p.$$eval(".sh-card .tbl-ed .th span", (a) => a.map((x) => x.textContent))).includes("Opération"), "blocs partagés : tableaux avec les colonnes du book");
+  await p.click("[data-shsave=battery-reco]"); await p.waitForTimeout(300);
   await p.goto(URL + "#/books"); await p.click("a.btn[href*='msa-220-c-b']"); await p.waitForSelector(".sheet"); await p.waitForTimeout(600);
   ok((await p.textContent("#preview")).includes("Toujours la séparer de la machine"), "bloc partagé « Recommandations batterie » repris dans le book");
   // 4. historique

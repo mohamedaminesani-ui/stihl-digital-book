@@ -59,7 +59,7 @@ function route() {
   else if (h.startsWith("#/books")) viewLibrary(new URLSearchParams(h.split("?")[1] || ""));
   else viewDashboard();
 }
-addEventListener("beforeunload", (e) => { if (S.ed?.dirty) { e.preventDefault(); e.returnValue = ""; } });
+addEventListener("beforeunload", (e) => { if (S.ed?.dirty || Object.values(S.sh || {}).some((x) => x.dirty)) { e.preventDefault(); e.returnValue = ""; } });
 
 // ---------------------------------------------------------------- tableau de bord
 function viewDashboard() {
@@ -651,30 +651,67 @@ async function historyDialog() {
 }
 
 // ---------------------------------------------------------------- blocs partagés
+// Chaque bloc s'édite sous la forme qu'il a dans le digital book : un tableau avec les mêmes colonnes et le même en-tête.
+const SH_COLS = {
+  maintenance: [{ k: "op", label: "Opération", w: "1.4fr" }, { k: "interval", label: "Intervalle" }],
+  batteryReco: [{ k: "text", label: "Recommandations" }],
+  consumables: [{ k: "ref", label: "Numéro d'article" }, { k: "desc", label: "Description", w: "1.4fr" }, { k: "model", label: "Modèle", w: ".7fr" }],
+  accessories: [{ k: "ref", label: "Numéro d'article" }, { k: "desc", label: "Description", w: "1.4fr" }, { k: "model", label: "Modèle", w: ".7fr" }],
+};
+const SH_PAGE = { maintenance: "Page 2 · Intervalles de maintenance", batteryReco: "Page 2 · Recommandations batterie", consumables: "Page 2 · Consommables", accessories: "Page 3 · Accessoires (ajoutés à la fin du tableau)" };
+function shRows(id) {
+  const def = SHARED[id], doc = S.docs["shared:" + id];
+  const rows = doc?.v.rows ?? def.rows;
+  return def.kind === "batteryReco" ? rows.map((t) => ({ text: t })) : rows.map((r) => ({ ...r }));
+}
 function viewShared() {
+  S.sh = S.sh || {};
+  for (const id of Object.keys(SHARED)) if (!S.sh[id]) S.sh[id] = { rows: shRows(id), dirty: false };
   const used = (id) => books().filter((b) => Object.values(b.v.shared || {}).includes(id)).length;
-  $("view").innerHTML = `<div class="head-row"><h1>Blocs partagés</h1></div><p class="muted">Un bloc partagé se modifie une fois ici et se met à jour dans tous les books qui l'utilisent (au prochain aperçu ou export).</p>
-    <div class="shared">${Object.entries(SHARED).map(([id, def]) => {
-      const doc = S.docs["shared:" + id];
-      const rows = doc?.v.rows ?? def.rows;
-      const isLines = def.kind === "batteryReco";
-      const cols = def.kind === "maintenance" ? [["op", "Opération"], ["interval", "Intervalle"]] : [["ref", "N° d'article"], ["desc", "Description"], ["model", "Modèle"]];
-      return `<section class="sh-card" data-id="${id}"><h2>${esc(def.title)}</h2><p class="muted">${esc(def.note)} · utilisé par ${used(id)} book(s)${doc ? ` · version ${doc.ver}` : " · pas encore enregistré"}</p>
-        ${isLines ? `<textarea rows="7" data-shlines="1" aria-label="${esc(def.title)}">${esc(rows.join("\n"))}</textarea><small>Une ligne = une recommandation.</small>`
-          : `<textarea rows="${Math.max(4, rows.length + 1)}" data-shtsv="${cols.map((c) => c[0]).join(",")}" aria-label="${esc(def.title)}">${esc(rows.map((r) => cols.map((c) => r[c[0]] || "").join("\t")).join("\n"))}</textarea><small>Une ligne par entrée, colonnes séparées par une tabulation (${cols.map((c) => c[1]).join(" · ")}) : copier-coller depuis Excel.</small>`}
-        <div class="tbl-actions"><button class="btn primary small" data-shsave="${id}" type="button">Enregistrer</button></div></section>`;
-    }).join("")}</div>`;
-  $("view").querySelectorAll("[data-shsave]").forEach((btn) => (btn.onclick = async () => {
-    const id = btn.dataset.shsave, card = btn.closest(".sh-card"), ta = card.querySelector("textarea"), def = SHARED[id];
-    const rows = ta.dataset.shlines ? ta.value.split("\n").map((s) => s.trim()).filter(Boolean)
-      : ta.value.split(/\r?\n/).filter((l) => l.trim()).map((l) => { const c = l.split("\t"); return Object.fromEntries(ta.dataset.shtsv.split(",").map((k, i) => [k, (c[i] || "").trim()])); });
-    const cur = S.docs["shared:" + id];
-    try {
-      const r = await S.api.save("shared:" + id, { title: def.title, kind: def.kind, rows }, cur?.ver || 0);
-      S.docs["shared:" + id] = { v: { title: def.title, kind: def.kind, rows }, ver: r.ver, t: r.t };
-      toast("Bloc partagé enregistré."); viewShared();
-    } catch (e) { toast(e instanceof Conflict ? "Modifié entre-temps par quelqu'un d'autre : recharge la page." : "Enregistrement impossible : " + e.message); }
-  }));
+  const card = (id) => {
+    const def = SHARED[id], doc = S.docs["shared:" + id], cols = SH_COLS[def.kind], st = S.sh[id];
+    return `<section class="sh-card" data-id="${id}"><h2>${esc(def.title)}</h2>
+      <p class="muted">${esc(SH_PAGE[def.kind])} · utilisé par ${used(id)} book(s) · ${doc ? `version ${doc.ver}` : "pas encore enregistré"}</p>
+      <div class="tbl-ed book-look" style="--cols:${cols.map((c) => c.w || "1fr").join(" ")} 64px">
+        <div class="tr th">${cols.map((c) => `<span>${esc(c.label)}</span>`).join("")}<span></span></div>
+        ${st.rows.map((r, i) => `<div class="tr">${cols.map((c) => `<input aria-label="${esc(c.label)} ${i + 1}" data-shp="${id}.${i}.${c.k}" value="${esc(r[c.k])}">`).join("")}
+          <span class="rbtn"><button type="button" data-shup="${id}.${i}" aria-label="Monter">↑</button><button type="button" data-shdel="${id}.${i}" aria-label="Supprimer">×</button></span></div>`).join("") || `<div class="tr empty-row"><span>Aucune ligne : ajoute-en une, ou colle-les depuis Excel.</span></div>`}
+      </div>
+      <div class="tbl-actions"><button class="btn small" type="button" data-shadd="${id}">+ Ligne</button><button class="btn small" type="button" data-shpaste="${id}">Coller depuis Excel</button>
+        <button class="btn primary small" type="button" data-shsave="${id}">Enregistrer</button><span class="muted sh-state" data-shstate="${id}">${st.dirty ? "Modifications non enregistrées" : ""}</span></div></section>`;
+  };
+  $("view").innerHTML = `<div class="head-row"><h1>Blocs partagés</h1></div><p class="muted">Un bloc partagé se modifie une fois ici et se met à jour dans tous les books qui l'utilisent (au prochain aperçu ou export). Chaque bloc a les mêmes colonnes que dans le digital book.</p>
+    <div class="shared">${Object.keys(SHARED).map(card).join("")}</div>`;
+  const v = $("view");
+  const dirty = (id) => { S.sh[id].dirty = true; const e = v.querySelector(`[data-shstate="${id}"]`); if (e) e.textContent = "Modifications non enregistrées"; };
+  v.oninput = (e) => { const p = e.target.dataset.shp; if (!p) return; const [id, i, k] = p.split("."); S.sh[id].rows[+i][k] = e.target.value; dirty(id); };
+  v.onclick = async (e) => {
+    const t = e.target.closest("button"); if (!t) return;
+    const d = t.dataset;
+    if (d.shadd) { const cols = SH_COLS[SHARED[d.shadd].kind]; S.sh[d.shadd].rows.push(Object.fromEntries(cols.map((c) => [c.k, ""]))); dirty(d.shadd); return viewShared(); }
+    if (d.shdel || d.shup) { const [id, i] = (d.shdel || d.shup).split("."), rows = S.sh[id].rows, n = +i; if (d.shdel) rows.splice(n, 1); else if (n > 0) [rows[n - 1], rows[n]] = [rows[n], rows[n - 1]]; dirty(id); return viewShared(); }
+    if (d.shpaste) {
+      const id = d.shpaste, cols = SH_COLS[SHARED[id].kind];
+      return dialog(`<h2 id="dlgTitle">Coller depuis Excel</h2><p class="muted">Copie les lignes dans Excel (colonnes : ${cols.map((c) => c.label).join(" · ")}) puis colle-les ici. Elles s'ajoutent à la fin du tableau.</p>
+        <textarea id="pasteBox" rows="8" aria-label="Lignes à coller"></textarea><div class="dlg-actions"><button class="btn" data-act="close" type="button">Annuler</button><button class="btn primary" data-act="ok" type="button">Ajouter</button></div>`,
+      (act, _b, dl) => {
+        if (act === "close") return dl.close();
+        const rows = $("pasteBox").value.split(/\r?\n/).filter((l) => l.trim()).map((l) => { const c = l.split("\t"); return Object.fromEntries(cols.map((x, i) => [x.k, (c[i] || "").trim()])); });
+        S.sh[id].rows.push(...rows); S.sh[id].dirty = true; dl.close(); viewShared(); toast(`${rows.length} ligne(s) ajoutée(s).`);
+      });
+    }
+    if (d.shsave) {
+      const id = d.shsave, def = SHARED[id], cur = S.docs["shared:" + id];
+      const clean = S.sh[id].rows.filter((r) => Object.values(r).some((x) => String(x).trim()));
+      const rows = def.kind === "batteryReco" ? clean.map((r) => r.text.trim()) : clean.map((r) => Object.fromEntries(Object.entries(r).map(([k, x]) => [k, String(x).trim()])));
+      try {
+        const r = await S.api.save("shared:" + id, { title: def.title, kind: def.kind, rows }, cur?.ver || 0);
+        S.docs["shared:" + id] = { v: { title: def.title, kind: def.kind, rows }, ver: r.ver, t: r.t };
+        S.sh[id] = { rows: shRows(id), dirty: false };
+        toast("Bloc partagé enregistré."); viewShared();
+      } catch (err) { toast(err instanceof Conflict ? "Modifié entre-temps par quelqu'un d'autre : recharge la page." : "Enregistrement impossible : " + err.message); }
+    }
+  };
 }
 
 // ---------------------------------------------------------------- connexion

@@ -100,10 +100,19 @@ textarea:focus{border-color:var(--ink);outline:none}
 .chk{display:flex;gap:8px;align-items:center;font-size:15px}.chk input{width:auto}
 .ph-field{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px dashed var(--line);padding:8px}
 .ph-field img{width:72px;height:72px;object-fit:contain;background:var(--tile)}
-.tbl-ed{display:flex;flex-direction:column;gap:4px;overflow-x:auto}
-.tbl-ed .tr{display:grid;grid-template-columns:var(--cols);gap:4px;min-width:420px}
-.tbl-ed .th span{font-size:12px;color:var(--muted)}
-.tbl-ed input{padding:6px 7px;font-size:14px}
+/* tableaux éditables : même aspect que dans le digital book (en-tête orange, cadre orange) */
+.tbl-ed{display:flex;flex-direction:column;overflow-x:auto}
+.tbl-ed .tr{display:grid;grid-template-columns:var(--cols);min-width:420px;align-items:stretch}
+.tbl-ed .th{background:var(--orange);border:1px solid var(--orange)}
+.tbl-ed .th span{font-family:var(--display);text-transform:uppercase;font-size:12px;letter-spacing:.03em;color:#fff;padding:7px 8px}
+.tbl-ed .tr:not(.th){border-left:1px solid var(--orange);border-right:1px solid var(--orange)}
+.tbl-ed .tr:not(.th):last-child{border-bottom:1px solid var(--orange)}
+.tbl-ed input{padding:6px 8px;font-size:14px;border:0;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.tbl-ed input:focus{outline:2px solid var(--orange);outline-offset:-2px}
+.tbl-ed .rbtn{border-bottom:1px solid var(--line);justify-content:center;align-items:center}
+.tbl-ed .rbtn button{border:0;height:30px}
+.tbl-ed .empty-row{grid-template-columns:1fr}.tbl-ed .empty-row span{padding:10px 8px;color:var(--muted);font-size:14px}
+.sh-state{font-size:13px;color:var(--warn);align-self:center}
 .rbtn{display:flex;gap:2px}.rbtn button{width:30px;height:32px;border:1px solid var(--line);text-align:center}
 .tbl-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
 .mlist{list-style:none;margin:0;padding:0}
