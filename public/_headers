@@ -1,0 +1,16 @@
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/js/*
+  Cache-Control: no-cache
+/styles.css
+  Cache-Control: no-cache
+/samples/*
+  Cache-Control: no-cache
+/template/*
+  Cache-Control: no-cache
+/fonts/*
+  Cache-Control: public, max-age=2592000
+/vendor/*
+  Cache-Control: public, max-age=2592000
