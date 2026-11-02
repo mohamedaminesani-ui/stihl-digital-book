@@ -1,0 +1,309 @@
+{
+ "_note": "Extrait de la base D1 catalogue-2027 (lecture seule) le 02/11/2026 — familles utilisées par les tests.",
+ "structure": {
+  "techs": [
+   {
+    "id": "battery",
+    "name": "Battery",
+    "prefix": "BATTERY",
+    "fr": "Batterie"
+   },
+   {
+    "id": "petrol",
+    "name": "Petrol",
+    "prefix": "PETROL",
+    "fr": "Thermique"
+   },
+   {
+    "id": "electric",
+    "name": "Electric",
+    "prefix": "ELECTRIC",
+    "fr": "Électrique"
+   },
+   {
+    "id": "manual",
+    "name": "Manual",
+    "prefix": "",
+    "fr": "Manuel / sans moteur"
+   }
+  ],
+  "families": [
+   {
+    "id": "cultivator",
+    "name": "Cultivator & tiller",
+    "noun": "TILLER",
+    "techs": [
+     "battery",
+     "petrol"
+    ],
+    "specs": [
+     {
+      "k": "engineType",
+      "label": "Engine type",
+      "unit": "",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "motor",
+      "label": "Motor",
+      "unit": "",
+      "techs": [
+       "battery",
+       "electric"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "displacement",
+      "label": "Displacement",
+      "unit": "cm³",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "power",
+      "label": "Engine power",
+      "unit": "kW/hp",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "ratedOutput",
+      "label": "Rated output",
+      "unit": "W",
+      "techs": [
+       "electric"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "voltage",
+      "label": "Rated voltage",
+      "unit": "V",
+      "techs": [
+       "battery",
+       "electric"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "drive",
+      "label": "Drive",
+      "unit": "",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "tillingSet",
+      "label": "Tilling set Ø",
+      "unit": "cm",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "workingWidth",
+      "label": "Working width",
+      "unit": "cm",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "pto",
+      "label": "PTO (power take-off)",
+      "unit": "",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "runtime",
+      "label": "Operating time*",
+      "unit": "min",
+      "techs": [
+       "battery"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "weight",
+      "label": "Weight",
+      "unit": "kg",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "fuelTank",
+      "label": "Fuel tank capacity",
+      "unit": "l",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     }
+    ]
+   },
+   {
+    "id": "chainsaw",
+    "name": "Chainsaw",
+    "noun": "CHAINSAW",
+    "techs": [
+     "battery",
+     "petrol"
+    ],
+    "specs": [
+     {
+      "k": "engineType",
+      "label": "Engine type",
+      "unit": "",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "motor",
+      "label": "Motor",
+      "unit": "",
+      "techs": [
+       "battery",
+       "electric"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "displacement",
+      "label": "Displacement",
+      "unit": "cm³",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "power",
+      "label": "Engine power",
+      "unit": "kW/hp",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "ratedOutput",
+      "label": "Rated output",
+      "unit": "W",
+      "techs": [
+       "electric"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "voltage",
+      "label": "Rated voltage",
+      "unit": "V",
+      "techs": [
+       "battery",
+       "electric"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "bar",
+      "label": "Guide bar length",
+      "unit": "cm",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "chainType",
+      "label": "Saw chain type",
+      "unit": "",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "pitch",
+      "label": "Chain pitch",
+      "unit": "",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "powerWeight",
+      "label": "Power-to-weight ratio",
+      "unit": "kg/kW",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "oilTank",
+      "label": "Oil tank capacity",
+      "unit": "l",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "runtime",
+      "label": "Operating time*",
+      "unit": "min",
+      "techs": [
+       "battery"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "weight",
+      "label": "Weight",
+      "unit": "kg",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "fuelTank",
+      "label": "Fuel tank capacity",
+      "unit": "l",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     }
+    ]
+   }
+  ]
+ }
+}

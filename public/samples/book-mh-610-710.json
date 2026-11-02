@@ -1,0 +1,323 @@
+{
+ "id": "mh-610-710",
+ "lang": "fr",
+ "year": 2027,
+ "status": "draft",
+ "updatedAt": "2026-11-02T12:00:00Z",
+ "family": "cultivator",
+ "tech": "petrol",
+ "_note": "Contenu repris de la fiche MH_610_710_PRODUCT_INFORMATION_FR.pptx fournie par Amine (accents corrigés), pour comparer le rendu à l'original.",
+ "specKeys": [
+  "engineType",
+  "power",
+  "displacement",
+  "drive",
+  "tillingSet",
+  "workingWidth",
+  "weight",
+  "fuelTank"
+ ],
+ "familyTitle": "Motobineuses pour sols lourds",
+ "machines": [
+  {
+   "name": "MH 610",
+   "family": "cultivator",
+   "tech": "petrol",
+   "source": "book",
+   "images": {
+    "main": "mh/mh610.jpg"
+   },
+   "specs": {
+    "engineType": "4-temps",
+    "power": "4.4/6.1",
+    "displacement": "212",
+    "drive": "2V+1R",
+    "tillingSet": "31",
+    "workingWidth": "79",
+    "weight": "62",
+    "fuelTank": "3.6"
+   }
+  },
+  {
+   "name": "MH 710",
+   "family": "cultivator",
+   "tech": "petrol",
+   "source": "book",
+   "images": {
+    "main": "mh/mh710.jpg"
+   },
+   "specs": {
+    "engineType": "4-temps",
+    "power": "5.2/7.1",
+    "displacement": "252",
+    "drive": "2V+1R",
+    "tillingSet": "36",
+    "workingWidth": "97",
+    "weight": "101",
+    "fuelTank": "3.6"
+   }
+  }
+ ],
+ "feature": {
+  "title": "Prise de force (PTO)",
+  "text": "Pour les accessoires tels que les broyeurs, hache-paille, pompes à eau, moulins, etc.",
+  "note": "(Disponible sur le modèle MH 710)",
+  "photo": "mh/pto.png"
+ },
+ "targets": [
+  "Agriculteurs (agriculture et horticulture)",
+  "Propriétaires de plantations",
+  "Entreprises de location"
+ ],
+ "applications": [
+  "Conditions difficiles et sols lourds",
+  "Grandes surfaces"
+ ],
+ "argus": [
+  "Entretien facile",
+  "Grande largeur de travail",
+  "Toutes les pièces de rechange disponibles séparément",
+  "Toutes les commandes regroupées sur le guidon",
+  "Filtre à air à bain d'huile",
+  "Réglable pour différentes applications, conditions de terrain et morphologies"
+ ],
+ "accIncluded": [
+  {
+   "name": "Fraises",
+   "photo": "mh/acc-fraises.png"
+  },
+  {
+   "name": "Roues",
+   "photo": "mh/acc-roues.jpg"
+  }
+ ],
+ "accOptional": [
+  {
+   "name": "Charrue",
+   "photo": "mh/opt-charrue.png"
+  },
+  {
+   "name": "Butteur",
+   "photo": "mh/opt-butteur.png"
+  },
+  {
+   "name": "Roues en fer",
+   "photo": "mh/opt-roues-fer.png"
+  }
+ ],
+ "maintenance": [
+  {
+   "op": "Vérifier le niveau d'huile",
+   "interval": "Avant chaque utilisation"
+  },
+  {
+   "op": "Vérifier le filtre à air",
+   "interval": "Avant chaque utilisation"
+  },
+  {
+   "op": "Nettoyer le filtre à air",
+   "interval": "Toutes les 20 h ou selon besoin"
+  },
+  {
+   "op": "Vidange moteur 1ère fois",
+   "interval": "20 h / 1 mois"
+  },
+  {
+   "op": "Vidange moteur périodique",
+   "interval": "100 h / 6 mois"
+  },
+  {
+   "op": "Contrôle de la bougie",
+   "interval": "100 h / 6 mois"
+  },
+  {
+   "op": "Inspection revendeur STIHL",
+   "interval": "300 h / 12 mois"
+  }
+ ],
+ "parts": [
+  {
+   "ref": "62507115000",
+   "desc": "Courroie trapézoïdale",
+   "model": "MH 610"
+  },
+  {
+   "ref": "62509510812",
+   "desc": "Vis à six pans M8x35",
+   "model": "MH 610"
+  },
+  {
+   "ref": "62509551104",
+   "desc": "Écrou à six pans M8",
+   "model": "MH 610"
+  },
+  {
+   "ref": "62507162003",
+   "desc": "Boulon",
+   "model": "MH 610"
+  },
+  {
+   "ref": "62507164800",
+   "desc": "Esse d'essieu",
+   "model": "MH 610"
+  },
+  {
+   "ref": "62500071800",
+   "desc": "Kit de réparation (lame de fraise)",
+   "model": "MH 610"
+  },
+  {
+   "ref": "00041200603",
+   "desc": "Carburateur",
+   "model": "MH 610"
+  },
+  {
+   "ref": "00040071801",
+   "desc": "Kit de réparation carburateur",
+   "model": "MH 610"
+  },
+  {
+   "ref": "62519510807",
+   "desc": "Vis à six pans",
+   "model": "MH 710"
+  },
+  {
+   "ref": "62519551101",
+   "desc": "Écrou à six pans",
+   "model": "MH 710"
+  },
+  {
+   "ref": "62517118500",
+   "desc": "Boulon",
+   "model": "MH 710"
+  },
+  {
+   "ref": "62517164800",
+   "desc": "Esse d'essieu",
+   "model": "MH 710"
+  },
+  {
+   "ref": "62510071800",
+   "desc": "Kit de réparation (lame de fraise)",
+   "model": "MH 710"
+  },
+  {
+   "ref": "00041200608",
+   "desc": "Carburateur",
+   "model": "MH 710"
+  },
+  {
+   "ref": "00040071806",
+   "desc": "Kit de réparation carburateur",
+   "model": "MH 710"
+  },
+  {
+   "ref": "00044007000",
+   "desc": "Bougie",
+   "model": "MH 610 / MH 710"
+  },
+  {
+   "ref": "62507165002",
+   "desc": "Épingle d'axe",
+   "model": "MH 610 / MH 710"
+  },
+  {
+   "ref": "00041242801",
+   "desc": "Filtre",
+   "model": "MH 610 / MH 710"
+  }
+ ],
+ "consumables": [
+  {
+   "ref": "0781 309 2002",
+   "desc": "Huile moteur 600 ml",
+   "model": "SAE 30"
+  },
+  {
+   "ref": "0781 309 2003",
+   "desc": "Huile moteur 1,4 l",
+   "model": "SAE 30"
+  }
+ ],
+ "checklist": [
+  "Montage et fixation du guidon",
+  "Montage et fixation des fraises",
+  "Démarrage moteur et fonctionnement testés",
+  "Fonction embrayage / accélérateur OK",
+  "Coupe-circuit et arrêt moteur fonctionnels"
+ ],
+ "checklistPhoto": "mh/checklist.jpg",
+ "accessories": [
+  {
+   "ref": "00008840367",
+   "desc": "Lunettes",
+   "model": "FUNCTION"
+  },
+  {
+   "ref": "00008840539",
+   "desc": "Protection auditive",
+   "model": "CONCEPT"
+  },
+  {
+   "ref": "008848901..",
+   "desc": "Chaussures de travail",
+   "model": "WORKRT S3"
+  },
+  {
+   "ref": "008845800..",
+   "desc": "Pantalon de travail",
+   "model": ""
+  }
+ ],
+ "calendar": {
+  "rows": [
+   {
+    "label": "Travail des sols lourds",
+    "group": true
+   },
+   {
+    "label": "Travail primaire du sol / décompactage de sol lourd"
+   },
+   {
+    "label": "Ameublissement profond du sol"
+   },
+   {
+    "label": "Préparation du lit de semence et des plantations",
+    "group": true
+   },
+   {
+    "label": "Préparation finale du lit de semence"
+   },
+   {
+    "label": "Incorporation de compost / fumier / engrais"
+   },
+   {
+    "label": "Entretien des cultures",
+    "group": true
+   },
+   {
+    "label": "Travail entre rangs / désherbage superficiel"
+   },
+   {
+    "label": "Buttage / formation de billons (avec accessoire)"
+   },
+   {
+    "label": "Fin de cycle / nettoyage de la parcelle",
+    "group": true
+   },
+   {
+    "label": "Incorporation des résidus de culture (après récolte)"
+   },
+   {
+    "label": "Incorporation des cultures de couverture / engrais"
+   },
+   {
+    "label": "Spécifique MH 710 (prise de force – PTO)",
+    "group": true
+   },
+   {
+    "label": "Pompage de l'eau / support d'irrigation (si utilisé)"
+   }
+  ]
+ }
+}

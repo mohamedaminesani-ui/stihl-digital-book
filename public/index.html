@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#ffffff">
+<title>STIHL Digital Book Builder</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preload" href="fonts/contraface-text.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="hd"><div class="wrap top">
+  <img class="logo" src="template/logo.png" alt="STIHL" width="92" height="40">
+  <div class="t"><b>Digital Book Builder</b><span id="mode"></span></div>
+</div></header>
+
+<main id="main" class="wrap">
+  <section id="login" class="card" hidden>
+    <h1>Connexion</h1>
+    <form id="loginForm">
+      <label for="pw">Mot de passe</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <button class="btn primary" type="submit">Se connecter</button>
+      <p id="loginErr" class="err" role="alert"></p>
+    </form>
+  </section>
+
+  <section id="app" hidden>
+    <div class="bar">
+      <label class="field"><span>Book</span><select id="bookSel"></select></label>
+      <label class="field small"><span>Langue</span><select id="langSel"><option value="fr">FR</option><option value="en">EN</option></select></label>
+      <div class="actions">
+        <button class="btn primary" id="btnPptx" type="button">Exporter le PPTX</button>
+        <button class="btn" id="btnPdf" type="button">Exporter le PDF</button>
+      </div>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+
+    <div class="grid">
+      <aside class="qc" aria-labelledby="qcTitle">
+        <h2 id="qcTitle">Contrôle qualité</h2>
+        <ol id="pagesList" class="pages"></ol>
+        <div id="qcList"></div>
+      </aside>
+      <div id="preview" class="preview" aria-label="Aperçu des pages"></div>
+    </div>
+  </section>
+</main>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

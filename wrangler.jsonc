@@ -1,0 +1,18 @@
+{
+  "name": "stihl-digital-book",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*", "/img/*", "/cat-img/*"] },
+  "d1_databases": [
+    // books, blocs partagés, réglages, historique, sessions
+    { "binding": "DB", "database_name": "digital-book", "database_id": "7398420e-c34f-4183-84bd-708d25904bb9" },
+    // base du Catalogue Builder : LUE uniquement (caractéristiques, familles, photos) — zéro double saisie
+    { "binding": "CATALOGUE", "database_name": "catalogue-2027", "database_id": "8f74b1a0-7109-4686-aa69-a3d634f1977c" }
+  ],
+  "r2_buckets": [
+    { "binding": "PHOTOS", "bucket_name": "digital-book-photos" },
+    { "binding": "CAT_PHOTOS", "bucket_name": "catalogue-2027-photos" }
+  ],
+  "observability": { "enabled": true },
+  "keep_vars": true
+}

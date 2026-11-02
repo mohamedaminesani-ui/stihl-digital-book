@@ -1,0 +1,22 @@
+{
+ "id": "msa-220-c-b",
+ "lang": "fr",
+ "year": 2027,
+ "status": "draft",
+ "updatedAt": "2026-11-02T12:00:00Z",
+ "family": "chainsaw",
+ "tech": "battery",
+ "_note": "Machine pilote. MSA 220 C-B n'est pas dans la base du Catalogue Builder (seule MSA 220.1 y est, sans caractéristiques) : aucune valeur technique n'est inventée.",
+ "machines": [
+  {
+   "name": "MSA 220 C-B",
+   "family": "chainsaw",
+   "tech": "battery",
+   "specs": {},
+   "images": {
+    "main": null
+   },
+   "source": "book"
+  }
+ ]
+}
