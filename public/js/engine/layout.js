@@ -144,7 +144,8 @@ export function buildBook({ book, catalogue, measure, imageInfo }) {
 
     // A2 · caractéristiques (catalogue)
     const shown = machines.slice(0, G.specs.maxModels);
-    let specs = (famDef?.specs || []).filter((s) => !s.techs?.length || s.techs.includes(tech));
+    // caractéristiques de la famille (catalogue) + lignes ajoutées dans ce book
+    let specs = [...(famDef?.specs || []).filter((s) => !s.techs?.length || s.techs.includes(tech)), ...(book.extraSpecs || []).map((x) => ({ ...x, extra: true }))];
     if (book.specKeys?.length) specs = book.specKeys.map((k) => specs.find((s) => s.k === k) || { k, label: k, unit: "" });
     if (specs.length > G.specs.maxRows) {
       const filled = specs.filter((s) => shown.some((m) => valueOf(m, s.k)));
@@ -156,12 +157,14 @@ export function buildBook({ book, catalogue, measure, imageInfo }) {
     const cols = [G.specs.labelW, ...shown.map(() => mw)];
     const rows = [{ minH: G.specs.headH, fill: COLOR.orange, cells: [{ paras: [para([], { size: STYLE.specHead.size })] }, ...shown.map((m) => ({ paras: [para(run(STYLE.specHead, m.name), { align: "ctr" })] }))] }];
     for (const s of specs) {
-      const label = specLabel(lang, s), unit = s.unit ? ` [${s.unit}]` : "";
+      const label = book.specLabels?.[s.k] || (s.extra ? s.label : specLabel(lang, s)), unit = s.unit ? ` [${s.unit}]` : "";
       rows.push({ minH: G.specs.rowH, cells: [
         { paras: [para([run(STYLE.specLabel, label), ...(unit ? [run(STYLE.specUnit, unit)] : [])])] },
         ...shown.map((m) => {
-          const v = valueOf(m, s.k);
-          if (!v) issue("warn", 1, "caractéristiques", `Valeur absente du catalogue : ${label} — ${m.name}`);
+          const v = valueOf(m, s.k), cv = m.catSpecs ? valueOf({ specs: m.catSpecs }, s.k) : null;
+          if (!v) issue("warn", 1, "caractéristiques", `Valeur absente${m.source === "catalogue" ? " du catalogue" : ""} : ${label} — ${m.name}`);
+          else if (m.source === "catalogue" && cv && v !== cv) issue("warn", 1, "caractéristiques", `Valeur modifiée dans ce book : ${label} — ${m.name} = ${v} (catalogue : ${cv}).`);
+          else if (m.source === "catalogue" && !cv) issue("info", 1, "caractéristiques", `Valeur saisie dans ce book, absente du catalogue : ${label} — ${m.name} = ${v}.`);
           return { paras: [para(v ? run(STYLE.specValue, v) : [], { align: "ctr", size: STYLE.specValue.size })] };
         }),
       ] });

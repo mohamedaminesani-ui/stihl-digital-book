@@ -58,10 +58,21 @@ export function catMachine(cat, id) {
   return { name: m.name, family: m.family, tech: m.tech, specs: m.specs || {}, images: { main: catImageKey(m.images?.main) }, source: "catalogue", catId: id };
 }
 
-// book enregistré → book complet pour le moteur (machines du catalogue relues, blocs partagés appliqués)
+// clé d'une machine dans le book (pour ses valeurs modifiées)
+export const mKey = (m) => m.catId || "n:" + m.name;
+
+// book enregistré → book complet pour le moteur (machines du catalogue relues, blocs partagés appliqués).
+// specEdits[mKey][k] : valeur modifiée ou ajoutée dans le book ; elle passe avant celle du catalogue (et est signalée).
 export function resolveBook(book, cat, sharedDocs) {
   const b = JSON.parse(JSON.stringify(book));
-  b.machines = (book.machines || []).map((m) => (m.catId ? catMachine(cat, m.catId) || { name: m.name || m.catId, family: book.family, tech: book.tech, specs: {}, images: {}, source: "missing" } : { ...m, source: "book" }));
+  const edits = book.specEdits || {};
+  b.machines = (book.machines || []).map((m) => {
+    const r = m.catId ? catMachine(cat, m.catId) || { name: m.name || m.catId, family: book.family, tech: book.tech, specs: {}, images: {}, source: "missing" } : { ...m, source: "book" };
+    const e = edits[mKey(m)];
+    if (e && Object.keys(e).length) { r.catSpecs = r.specs; r.specs = { ...r.specs, ...e }; }
+    else r.catSpecs = r.specs;
+    return r;
+  });
   const sh = (id) => (id && sharedDocs?.[id]?.rows) || null;
   const s = book.shared || {};
   if (sh(s.maintenance)) b.maintenance = sh(s.maintenance);

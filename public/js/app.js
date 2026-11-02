@@ -1,7 +1,7 @@
 // STIHL Digital Book Builder — interface (bibliothèque, éditeur par bloc avec aperçu en direct, blocs partagés).
 import { createStudio, download } from "./studio.js";
 import { createApi, Conflict, prepareImage } from "./api.js";
-import { STATUS, SHARED, SHARED_FOR, emptyBook, resolveBook, newId, catMachine } from "./model.js";
+import { STATUS, SHARED, SHARED_FOR, emptyBook, resolveBook, newId, mKey } from "./model.js";
 import { familyTitle, specLabel } from "./engine/i18n.js";
 
 const $ = (id) => document.getElementById(id);
@@ -51,17 +51,63 @@ function route() {
     if (!confirm("Des modifications ne sont pas enregistrées. Quitter quand même ?")) { leaving = true; history.back(); setTimeout(() => (leaving = false), 50); return; }
   }
   const h = location.hash || "#/";
-  document.querySelectorAll("[data-nav]").forEach((a) => a.classList.toggle("on", (h.startsWith("#/shared") ? "shared" : "books") === a.dataset.nav));
+  const sec = h.startsWith("#/shared") ? "shared" : h.startsWith("#/book") ? "books" : "dash";
+  document.querySelectorAll("[data-nav]").forEach((a) => a.classList.toggle("on", sec === a.dataset.nav));
   if (!h.startsWith("#/book/")) S.ed = null;
   if (h.startsWith("#/book/")) openEditor(decodeURIComponent(h.slice(7)));
   else if (h.startsWith("#/shared")) viewShared();
-  else viewLibrary();
+  else if (h.startsWith("#/books")) viewLibrary(new URLSearchParams(h.split("?")[1] || ""));
+  else viewDashboard();
 }
 addEventListener("beforeunload", (e) => { if (S.ed?.dirty) { e.preventDefault(); e.returnValue = ""; } });
 
+// ---------------------------------------------------------------- tableau de bord
+function viewDashboard() {
+  const bs = books(), ms = S.cat.machines || [];
+  const covered = new Set(bs.flatMap((b) => (b.v.machines || []).map((m) => m.catId).filter(Boolean)));
+  const n = (st) => bs.filter((b) => (b.v.status || "draft") === st).length;
+  const without = ms.filter((m) => !covered.has(m.id)).sort((a, b) => a.name.localeCompare(b.name, "fr", { numeric: true }));
+  const fams = (S.cat.structure?.families || []).map((f) => ({ f, ms: ms.filter((m) => m.family === f.id), bs: bs.filter((b) => b.v.family === f.id) })).filter((x) => x.ms.length || x.bs.length);
+  const recent = bs.slice().sort((a, b) => (b.t || 0) - (a.t || 0)).slice(0, 5);
+  const kpi = (v, l, href, cls = "") => `<a class="kpi ${cls}" href="${href}"><b>${v}</b><span>${l}</span></a>`;
+  $("view").innerHTML = `<div class="head-row"><div><h1>Tableau de bord</h1><p class="muted">Digital books d'après-formation · Fiche d'information 3 pages · FR / EN</p></div>
+      <div class="actions"><a class="btn" href="#/books">Voir les books</a><button class="btn primary" id="dNew">Nouveau book</button></div></div>
+    <div class="kpis">${kpi(bs.length, "books", "#/books")}${kpi(n("draft"), "brouillons", "#/books?s=draft")}${kpi(n("review"), "à valider", "#/books?s=review", n("review") ? "warn" : "")}${kpi(n("valid"), "validés", "#/books?s=valid")}</div>
+    <div class="kpis">${kpi(ms.length, "machines dans le catalogue", CATALOGUE_URL)}${kpi(covered.size, "machines avec un book", "#/books")}${kpi(without.length, "machines sans book", "#sans-book", without.length ? "warn" : "")}<a class="kpi" href="#/books" id="kErr"><b>…</b><span>books avec défaut bloquant</span></a></div>
+    <section><h2>Par famille</h2>${fams.length ? `<div class="famtable">${fams.map(({ f, ms, bs }) => {
+      const c = ms.filter((m) => covered.has(m.id)).length;
+      return `<a class="famrow" href="#/books?f=${encodeURIComponent(f.id)}"><b>${esc(familyTitle("fr", f, f.techs?.[0], S.cat.structure?.techs).replace(/ (à batterie|thermique|électrique)$/, ""))}</b>
+        <span class="bar" aria-hidden="true"><i style="width:${ms.length ? Math.round((100 * c) / ms.length) : 0}%"></i></span>
+        <span class="muted">${c}/${ms.length} machines couvertes · ${bs.length} book(s)</span></a>`;
+    }).join("")}</div>` : `<p class="empty">Aucune machine dans le catalogue.</p>`}</section>
+    <section id="sans-book"><h2>Machines du catalogue sans book (${without.length})</h2>${without.length ? `<ul class="books">${without.slice(0, 15).map((m) => `<li class="bk"><div class="bk-main"><b>${esc(m.name)}</b><span class="muted">${esc(familyTitle("fr", S.cat.structure?.families?.find((f) => f.id === m.family), m.tech, S.cat.structure?.techs))}</span></div><button class="btn small" data-newfor="${esc(m.id)}">Créer le book</button></li>`).join("")}</ul>${without.length > 15 ? `<p class="muted">… et ${without.length - 15} autres : utilise « Nouveau book ».</p>` : ""}` : `<p class="empty">Toutes les machines du catalogue ont un book.</p>`}</section>
+    <section><h2>Derniers books modifiés</h2>${recent.length ? `<ul class="books">${recent.map((b) => `<li class="bk"><div class="bk-main"><b>${esc((b.v.machines || []).map((m) => m.name || m.catId).join(" / "))}</b><span class="muted">${esc((b.v.lang || "fr").toUpperCase())} · modifié le ${esc(fmtDate(b.t))}</span></div><span class="pill ${b.v.status}">${STATUS[b.v.status] || "Brouillon"}</span><a class="btn small" href="#/book/${encodeURIComponent(b.id)}">Ouvrir</a></li>`).join("")}</ul>` : `<p class="empty">Aucun book pour l'instant.</p>`}</section>
+    <section><h2>Comment ça marche</h2><ol class="steps">
+      <li><b>Nouveau book</b> : 1 à 4 machines du catalogue (même famille et technologie), ou une machine hors catalogue.</li>
+      <li><b>Remplir</b> : un formulaire par bloc, aperçu en direct. Les caractéristiques viennent du Catalogue Builder ; une valeur modifiée ou une ligne ajoutée peut être renvoyée au catalogue.</li>
+      <li><b>Contrôler</b> : le contrôle qualité signale les manques et les textes trop longs ; « Validé » n'est possible que sans défaut bloquant.</li>
+      <li><b>Exporter</b> : PPTX éditable et PDF identique à l'aperçu.</li></ol></section>`;
+  $("dNew").onclick = () => newBookDialog();
+  $("view").querySelector('a[href="#sans-book"]').onclick = (e) => { e.preventDefault(); $("sans-book").scrollIntoView({ behavior: "smooth" }); };
+  $("view").querySelectorAll("[data-newfor]").forEach((b) => (b.onclick = () => newBookDialog(b.dataset.newfor)));
+  // défauts bloquants : calculés book par book après l'affichage
+  (async () => {
+    let err = 0;
+    for (const b of bs) {
+      if (location.hash && location.hash !== "#/" && !location.hash.startsWith("#sans")) return;
+      try { const r = await S.studio.build(resolveBook(b.v, S.cat, sharedDocs()), S.cat); if (r.issues.some((x) => x.level === "error")) err++; } catch { err++; }
+    }
+    const k = $("kErr"); if (k) { k.querySelector("b").textContent = err; k.classList.toggle("warn", err > 0); }
+  })();
+}
+
 // ---------------------------------------------------------------- bibliothèque
-function viewLibrary() {
-  const list = books().sort((a, b) => (b.t || 0) - (a.t || 0));
+function viewLibrary(q = new URLSearchParams()) {
+  const f = { fam: q.get("f") || "", tech: q.get("t") || "", st: q.get("s") || "", txt: (q.get("q") || "").toLowerCase() };
+  const all = books();
+  const list = all.filter((b) => (!f.fam || b.v.family === f.fam) && (!f.tech || b.v.tech === f.tech) && (!f.st || (b.v.status || "draft") === f.st)
+    && (!f.txt || (b.v.machines || []).map((m) => m.name || m.catId).join(" ").toLowerCase().includes(f.txt))).sort((a, b) => (b.t || 0) - (a.t || 0));
+  const fams = [...new Set(all.map((b) => b.v.family))];
   const card = (b, sample) => {
     const v = sample ? b : b.v;
     const names = (v.machines || []).map((m) => m.name || m.catId).join(" / ") || "Sans machine";
@@ -69,10 +115,19 @@ function viewLibrary() {
       <span class="muted">${esc(famName(v.family))} · ${esc(techName(v.tech))} · ${esc((v.lang || "fr").toUpperCase())}${sample ? " · exemple" : ` · modifié le ${esc(fmtDate(b.t))}`}</span></div>
       ${sample ? `<button class="btn" data-copy="${esc(v.id)}">Copier dans mes books</button>` : `<span class="pill ${v.status}">${STATUS[v.status] || "Brouillon"}</span><a class="btn" href="#/book/${encodeURIComponent(b.id)}">Ouvrir</a>`}</li>`;
   };
+  const opt = (v, l, cur) => `<option value="${esc(v)}" ${v === cur ? "selected" : ""}>${esc(l)}</option>`;
   $("view").innerHTML = `<div class="head-row"><h1>Mes digital books</h1><button class="btn primary" id="btnNew">Nouveau book</button></div>
-    ${list.length ? `<ul class="books">${list.map((b) => card(b)).join("")}</ul>` : `<p class="empty">Aucun book pour l'instant. Crée le premier avec « Nouveau book », ou copie un exemple ci-dessous.</p>`}
+    <form class="filters" id="flt">
+      <input id="fq" type="search" placeholder="Rechercher une machine" value="${esc(q.get("q") || "")}" aria-label="Rechercher une machine">
+      <select id="ff" aria-label="Famille">${opt("", "Toutes les familles", f.fam)}${fams.map((x) => opt(x, famName(x), f.fam)).join("")}</select>
+      <select id="ft" aria-label="Technologie">${opt("", "Toutes technologies", f.tech)}${(S.cat.structure?.techs || []).map((t) => opt(t.id, t.fr, f.tech)).join("")}</select>
+      <select id="fs" aria-label="Statut">${opt("", "Tous les statuts", f.st)}${Object.entries(STATUS).map(([k, v]) => opt(k, v, f.st)).join("")}</select>
+    </form>
+    ${all.length ? (list.length ? `<p class="muted">${list.length} book(s)</p><ul class="books">${list.map((b) => card(b)).join("")}</ul>` : `<p class="empty">Aucun book ne correspond à ces filtres.</p>`) : `<p class="empty">Aucun book pour l'instant. Crée le premier avec « Nouveau book », ou copie un exemple ci-dessous.</p>`}
     <h2>Exemples</h2><ul class="books">${S.samples.map((s) => card(s, true)).join("")}</ul>`;
-  $("btnNew").onclick = newBookDialog;
+  $("btnNew").onclick = () => newBookDialog();
+  const go = () => { const p = new URLSearchParams(); for (const [k, id] of [["q", "fq"], ["f", "ff"], ["t", "ft"], ["s", "fs"]]) if ($(id).value) p.set(k, $(id).value); history.replaceState(null, "", "#/books" + (p.toString() ? "?" + p : "")); viewLibrary(p); };
+  $("flt").onchange = go; $("fq").oninput = () => { clearTimeout(go.t); go.t = setTimeout(() => { go(); const i = $("fq"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 300); };
   $("view").querySelectorAll("[data-copy]").forEach((b) => (b.onclick = async () => {
     const s = JSON.parse(JSON.stringify(S.samples.find((x) => x.id === b.dataset.copy)));
     s.id = newId(s.machines.map((m) => m.name), s.lang); s.status = "draft"; delete s._note;
@@ -88,10 +143,11 @@ async function createBook(book) {
   location.hash = "#/book/" + encodeURIComponent(book.id);
 }
 
-function newBookDialog() {
+function newBookDialog(preId) {
   const fams = S.cat.structure?.families || [];
   const techs = S.cat.structure?.techs || [];
-  let picked = [];
+  const pre = preId && S.cat.machines.find((m) => m.id === preId);
+  let picked = pre ? [{ catId: pre.id, name: pre.name, family: pre.family, tech: pre.tech }] : [];
   const render = (q = "") => {
     const ql = q.toLowerCase();
     const ms = S.cat.machines.filter((m) => !ql || `${m.name} ${famName(m.family)}`.toLowerCase().includes(ql)).sort((a, b) => a.name.localeCompare(b.name, "fr", { numeric: true }));
@@ -143,13 +199,13 @@ function newBookDialog() {
 // ---------------------------------------------------------------- éditeur
 function openEditor(id) {
   const doc = S.docs["book:" + id];
-  if (!doc) { $("view").innerHTML = `<p class="empty">Ce book n'existe pas (ou plus). <a href="#/">Retour à la bibliothèque</a></p>`; return; }
+  if (!doc) { $("view").innerHTML = `<p class="empty">Ce book n'existe pas (ou plus). <a href="#/books">Retour aux books</a></p>`; return; }
   if (S.ed && S.ed.id === id) return;
   S.ed = { id, book: JSON.parse(JSON.stringify(doc.v)), ver: doc.ver, saved: JSON.stringify(doc.v), dirty: false, res: null, tab: "form" };
   const b = S.ed.book;
   b.shared = b.shared || {}; b.hide = b.hide || {}; b.feature = b.feature || {}; b.calendar = b.calendar || { rows: [] };
   $("view").innerHTML = `<div class="ed-bar">
-      <a class="btn" href="#/">← Books</a>
+      <a class="btn" href="#/books">← Books</a>
       <b class="ed-title" id="edTitle"></b>
       <select id="edStatus" aria-label="Statut">${Object.entries(STATUS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select>
       <button class="btn primary" id="edSave">Enregistrer</button>
@@ -226,12 +282,23 @@ const sharedSel = (slot, label) => {
     ${cur ? `<small>Modifié une fois dans <a href="#/shared">Blocs partagés</a>, repris dans tous les books qui l'utilisent.</small>` : ""}</div>`;
 };
 
+function famSpecs(b) {
+  const fam = S.cat.structure?.families?.find((f) => f.id === b.family);
+  return [...(fam?.specs || []).filter((s) => !s.techs?.length || s.techs.includes(b.tech)), ...(b.extraSpecs || []).map((x) => ({ ...x, extra: true }))];
+}
 function machinesSection() {
   const b = S.ed.book, fam = S.cat.structure?.families?.find((f) => f.id === b.family);
   const resolved = resolveBook(b, S.cat, sharedDocs()).machines;
-  const specs = (fam?.specs || []).filter((s) => !s.techs?.length || s.techs.includes(b.tech));
+  const specs = famSpecs(b);
   const chosen = new Set(b.specKeys?.length ? b.specKeys : specs.map((s) => s.k));
-  const hasBook = resolved.some((m) => m.source === "book");
+  const label = (s) => esc(b.specLabels?.[s.k] || (s.extra ? s.label : specLabel(b.lang, s)));
+  const cell = (m, i, s) => {
+    const lab = `${label(s)} ${esc(m.name)}`;
+    if (m.source !== "catalogue") return `<input aria-label="${lab}" data-path="machines.${i}.specs.${s.k}" value="${esc(b.machines[i].specs?.[s.k] ?? "")}" placeholder="—">`;
+    const mk = mKey(b.machines[i]), cat = m.catSpecs?.[s.k] ?? "", ed = b.specEdits?.[mk]?.[s.k];
+    const edited = ed !== undefined && String(ed) !== String(cat);
+    return `<span class="cv"><input aria-label="${lab}" data-cspec="${esc(mk)}|${s.k}" value="${esc(ed ?? cat)}" placeholder="—" class="${edited ? "edited" : ""}">${edited ? `<button type="button" data-crevert="${esc(mk)}|${s.k}" title="Revenir à la valeur du catalogue${cat ? " : " + esc(cat) : ""}" aria-label="Revenir à la valeur du catalogue">↺</button>` : ""}</span>`;
+  };
   return `<p class="muted">${esc(familyTitle("fr", fam, b.tech, S.cat.structure?.techs))} · ${resolved.length} machine(s) sur 4.</p>
     <ul class="mlist">${resolved.map((m, i) => `<li><b>${esc(m.name)}</b> <span class="tag ${m.source}">${m.source === "catalogue" ? "Catalogue" : m.source === "missing" ? "Introuvable" : "Hors catalogue"}</span>
       <span class="rbtn">${i ? `<button type="button" data-mup="${i}" aria-label="Monter">↑</button>` : ""}<button type="button" data-mdel="${i}" aria-label="Retirer">×</button></span></li>`).join("")}</ul>
@@ -240,10 +307,99 @@ function machinesSection() {
     <div class="fld"><span class="lbl">Caractéristiques (9 lignes au maximum)</span>
       <div class="spec-grid" style="--n:${resolved.length}">
         <span class="th">Afficher</span>${resolved.map((m) => `<span class="th">${esc(m.name)}</span>`).join("")}
-        ${specs.map((s) => `<label class="sk"><input type="checkbox" data-speck="${s.k}" ${chosen.has(s.k) ? "checked" : ""}> ${esc(specLabel(b.lang, s))}${s.unit ? ` [${esc(s.unit)}]` : ""}</label>
-          ${resolved.map((m, i) => m.source === "book" ? `<input aria-label="${esc(specLabel(b.lang, s))} ${esc(m.name)}" data-path="machines.${i}.specs.${s.k}" value="${esc(m.specs?.[s.k] ?? "")}">` : `<span class="ro">${esc(m.specs?.[s.k] ?? "") || "—"}</span>`).join("")}`).join("")}
+        ${specs.map((s) => `<label class="sk"><input type="checkbox" data-speck="${s.k}" ${chosen.has(s.k) ? "checked" : ""}> <span>${label(s)}${s.unit ? ` [${esc(s.unit)}]` : ""}${s.extra ? ` <em class="tag book">ce book</em>` : ""}</span>${s.extra ? `<button type="button" class="xdel" data-xdel="${s.k}" aria-label="Supprimer la ligne">×</button>` : ""}</label>
+          ${resolved.map((m, i) => cell(m, i, s)).join("")}`).join("")}
       </div>
-      <small>${resolved.some((m) => m.source === "catalogue") ? `Valeurs du catalogue verrouillées : <a href="${CATALOGUE_URL}" target="_blank" rel="noopener">modifier dans le Catalogue Builder</a>. ` : ""}${hasBook ? "Machine hors catalogue : valeurs saisies ici, à partir d'une source fiable uniquement." : ""}</small></div>`;
+      <div class="tbl-actions"><button class="btn small" type="button" id="addSpec">+ Ajouter une caractéristique</button></div>
+      <small>Les valeurs viennent du Catalogue Builder. Tu peux les modifier ici : la case passe en orange, et le site te propose de l'enregistrer aussi dans le catalogue. ↺ = revenir à la valeur du catalogue.</small></div>`;
+}
+
+// camelCase anglais pour la clé d'une nouvelle caractéristique (ex. « Chain speed » → chainSpeed)
+function specKeyFrom(label, taken) {
+  const w = String(label).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9 ]+/g, " ").trim().split(/\s+/).filter(Boolean);
+  let k = w.map((x, i) => (i ? x[0].toUpperCase() + x.slice(1).toLowerCase() : x.toLowerCase())).join("") || "spec";
+  if (/^\d/.test(k)) k = "x" + k;
+  k = k.slice(0, 36);
+  let out = k, i = 2;
+  while (taken.has(out)) out = k + i++;
+  return out;
+}
+
+// une valeur modifiée pour une machine du catalogue : proposer de l'enregistrer aussi dans le catalogue
+function askCatalogueValue(mk, k) {
+  const b = S.ed.book, i = b.machines.findIndex((m) => mKey(m) === mk), m = b.machines[i];
+  const val = b.specEdits?.[mk]?.[k];
+  if (!m?.catId || val === undefined) return;
+  const spec = famSpecs(b).find((s) => s.k === k) || { k, label: k };
+  const lab = b.specLabels?.[k] || (spec.extra ? spec.label : specLabel(b.lang, spec));
+  const cat = S.cat.machines.find((x) => x.id === m.catId)?.specs?.[k];
+  dialog(`<h2 id="dlgTitle">Ajouter aussi au catalogue ?</h2>
+    <p><b>${esc(lab)}</b> · ${esc(m.name)} : <b>${esc(val)}</b>${cat ? ` (catalogue : ${esc(cat)})` : " (vide dans le catalogue)"}.</p>
+    <p class="muted">${spec.extra ? `La ligne « ${esc(lab)} » n'existe pas encore dans le catalogue : elle sera ajoutée à la famille, pour toutes les machines ${esc(techName(b.tech).toLowerCase())}. ` : ""}Dans le catalogue, la valeur apparaîtra aussi dans les tableaux du Pocket Guide et dans tous les books de cette machine.</p>
+    <div class="dlg-actions"><button class="btn" data-act="book" type="button">Seulement dans ce book</button><button class="btn primary" data-act="cat" type="button">Oui, l'enregistrer dans le catalogue</button></div>`,
+  async (act, _b, d) => {
+    d.close();
+    if (act !== "cat") return;
+    try {
+      if (spec.extra) await pushFieldToCatalogue(spec);
+      await S.api.catSpec(m.catId, k, val);
+      const cm = S.cat.machines.find((x) => x.id === m.catId); if (cm) { cm.specs = cm.specs || {}; cm.specs[k] = val; }
+      delete b.specEdits[mk][k];
+      rerender(); markDirty();
+      toast(`Enregistré dans le Catalogue Builder : ${lab} — ${m.name} = ${val}.`, 5000);
+    } catch (e) { toast(e instanceof Conflict ? "Le catalogue a été modifié entre-temps : recharge la page et recommence." : "Catalogue non modifié : " + e.message, 7000); }
+  });
+}
+// ligne ajoutée dans le book → famille du catalogue (libellé anglais)
+async function pushFieldToCatalogue(spec) {
+  const b = S.ed.book;
+  await S.api.catField(b.family, b.tech, spec.k, spec.labelEn || spec.label, spec.unit || "");
+  const fam = S.cat.structure?.families?.find((f) => f.id === b.family);
+  if (fam && !fam.specs.some((x) => x.k === spec.k)) fam.specs.push({ k: spec.k, label: spec.labelEn || spec.label, unit: spec.unit || "", techs: [b.tech], table: true, card: true, header: [] });
+  b.specLabels = { ...(b.specLabels || {}), [spec.k]: spec.label };
+  b.extraSpecs = (b.extraSpecs || []).filter((x) => x.k !== spec.k);
+}
+
+function addSpecDialog() {
+  const b = S.ed.book, res = resolveBook(b, S.cat, sharedDocs()).machines;
+  dialog(`<h2 id="dlgTitle">Ajouter une caractéristique</h2>
+    <div class="row2"><div><label for="asLab">Libellé (${esc((b.lang || "fr").toUpperCase())})</label><input id="asLab" placeholder="ex. Vitesse de chaîne"></div>
+    <div><label for="asUnit">Unité</label><input id="asUnit" placeholder="ex. m/s"></div></div>
+    <label for="asEn" style="margin-top:10px">Libellé anglais (pour le catalogue)</label><input id="asEn" placeholder="ex. Chain speed">
+    <div class="spec-add">${res.map((m, i) => `<label for="asV${i}">${esc(m.name)}</label><input id="asV${i}" placeholder="valeur (source fiable)">`).join("")}</div>
+    <p class="muted">Ajouter aussi cette ligne au Catalogue Builder ? Elle sera ajoutée à la famille pour toutes les machines ${esc(techName(b.tech).toLowerCase())}, et les valeurs des machines du catalogue y seront enregistrées.</p>
+    <div class="dlg-actions"><button class="btn" data-act="close" type="button">Annuler</button><button class="btn" data-act="book" type="button">Ajouter à ce book seulement</button><button class="btn primary" data-act="cat" type="button">Ajouter au book et au catalogue</button></div>`,
+  async (act, _b, d) => {
+    if (act === "close") return d.close();
+    const label = $("asLab").value.trim(), unit = $("asUnit").value.trim(), labelEn = $("asEn").value.trim() || label;
+    if (!label) { $("asLab").focus(); return; }
+    const taken = new Set(famSpecs(b).map((x) => x.k));
+    const spec = { k: specKeyFrom(labelEn, taken), label, unit, labelEn };
+    const vals = res.map((_, i) => $("asV" + i).value.trim());
+    d.close();
+    b.extraSpecs = [...(b.extraSpecs || []), spec];
+    if (b.specKeys?.length) b.specKeys = [...b.specKeys, spec.k];
+    b.specEdits = b.specEdits || {};
+    vals.forEach((v, i) => {
+      if (!v) return;
+      const m = b.machines[i];
+      if (m.catId) { const mk = mKey(m); b.specEdits[mk] = { ...(b.specEdits[mk] || {}), [spec.k]: v }; }
+      else { m.specs = { ...(m.specs || {}), [spec.k]: v }; }
+    });
+    if (act === "cat") {
+      try {
+        await pushFieldToCatalogue(spec);
+        for (const [i, v] of vals.entries()) {
+          const m = b.machines[i]; if (!v || !m.catId) continue;
+          await S.api.catSpec(m.catId, spec.k, v);
+          const cm = S.cat.machines.find((x) => x.id === m.catId); if (cm) { cm.specs = cm.specs || {}; cm.specs[spec.k] = v; }
+          delete b.specEdits[mKey(m)][spec.k];
+        }
+        toast(`« ${label} » ajoutée au book et au Catalogue Builder.`, 5000);
+      } catch (e) { toast((e instanceof Conflict ? "Le catalogue a été modifié entre-temps" : "Catalogue non modifié : " + e.message) + " — la ligne reste dans ce book.", 7000); }
+    } else toast(`« ${label} » ajoutée à ce book seulement.`);
+    rerender(); markDirty();
+  });
 }
 
 function renderForm() {
@@ -283,7 +439,13 @@ function calendarField() {
 document.addEventListener("input", (e) => {
   if (!S.ed || !e.target.closest("#edForm")) return;
   const t = e.target, b = S.ed.book;
-  if (t.dataset.path && t.type !== "checkbox" && t.tagName !== "SELECT") {
+  if (t.dataset.cspec) {
+    const [mk, k] = t.dataset.cspec.split("|"), m = b.machines.find((x) => mKey(x) === mk);
+    const cat = S.cat.machines.find((x) => x.id === m?.catId)?.specs?.[k] ?? "";
+    b.specEdits = b.specEdits || {}; b.specEdits[mk] = b.specEdits[mk] || {};
+    if (t.value.trim() === String(cat) || (!t.value.trim() && !cat)) delete b.specEdits[mk][k]; else b.specEdits[mk][k] = t.value.trim();
+    t.classList.toggle("edited", b.specEdits[mk][k] !== undefined);
+  } else if (t.dataset.path && t.type !== "checkbox" && t.tagName !== "SELECT") {
     setPath(b, t.dataset.path, t.value);
     const c = document.querySelector(`[data-cnt="${t.dataset.path}"]`);
     if (c) { c.textContent = `${t.value.length}/${c.dataset.max}`; c.classList.toggle("over", t.value.length > +c.dataset.max); }
@@ -296,9 +458,9 @@ document.addEventListener("change", async (e) => {
   if (!S.ed || !e.target.closest("#edForm")) return;
   const t = e.target, b = S.ed.book;
   if (t.dataset.photo && t.files?.[0]) return uploadPhoto(t.dataset.photo, t.files[0]);
+  if (t.dataset.cspec) { const [mk, k] = t.dataset.cspec.split("|"); rerender(); if (b.specEdits?.[mk]?.[k] !== undefined) askCatalogueValue(mk, k); return; }
   if (t.dataset.speck) {
-    const fam = S.cat.structure?.families?.find((f) => f.id === b.family);
-    const all = (fam?.specs || []).filter((s) => !s.techs?.length || s.techs.includes(b.tech)).map((s) => s.k);
+    const all = famSpecs(b).map((s) => s.k);
     const cur = new Set(b.specKeys?.length ? b.specKeys : all);
     t.checked ? cur.add(t.dataset.speck) : cur.delete(t.dataset.speck);
     b.specKeys = all.filter((k) => cur.has(k));
@@ -322,6 +484,15 @@ document.addEventListener("click", async (e) => {
   else if (d.mdel !== undefined) { if (b.machines.length < 2) { toast("Un book garde au moins une machine."); return; } b.machines.splice(+d.mdel, 1); b.specKeys = b.specKeys || []; }
   else if (d.mup !== undefined) { const i = +d.mup; [b.machines[i - 1], b.machines[i]] = [b.machines[i], b.machines[i - 1]]; }
   else if (t.id === "addMachine") return addMachineDialog();
+  else if (t.id === "addSpec") return addSpecDialog();
+  else if (d.crevert) { const [mk, k] = d.crevert.split("|"); delete b.specEdits?.[mk]?.[k]; }
+  else if (d.xdel) {
+    if (!confirm("Supprimer cette ligne de ce book ?")) return;
+    b.extraSpecs = (b.extraSpecs || []).filter((x) => x.k !== d.xdel);
+    b.specKeys = (b.specKeys || []).filter((k) => k !== d.xdel);
+    for (const e of Object.values(b.specEdits || {})) delete e[d.xdel];
+    for (const m of b.machines) if (m.specs) delete m.specs[d.xdel];
+  }
   else return;
   rerender(); markDirty();
 });
@@ -465,7 +636,7 @@ function moreDialog() {
     if (act === "hist") return historyDialog();
     if (act === "del") {
       if (!confirm("Supprimer ce book ? Il reste récupérable dans l'historique de la base.")) return;
-      await S.api.remove("book:" + e.id, e.ver); delete S.docs["book:" + e.id]; S.ed = null; d.close(); location.hash = "#/"; toast("Book supprimé.");
+      await S.api.remove("book:" + e.id, e.ver); delete S.docs["book:" + e.id]; S.ed = null; d.close(); location.hash = "#/books"; toast("Book supprimé.");
     }
   });
 }

@@ -149,3 +149,24 @@ textarea:focus{border-color:var(--ink);outline:none}
 .db-page .ph{border:0.3mm dashed #c9c4bd;display:flex;align-items:center;justify-content:center;font:9pt system-ui,sans-serif;color:#8a847d;text-align:center}
 .db-page .bad{outline:0.6mm solid #d32f2f;outline-offset:-0.3mm;background:rgba(211,47,47,.06)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.cv{display:flex;gap:3px;min-width:0}.cv input{min-width:0}
+.cv input.edited,.spec-grid input.edited{border-color:var(--orange);background:#fff6ee}
+.cv button{width:28px;border:1px solid var(--line);flex:none}
+.spec-grid .sk span{min-width:0}.spec-grid .sk em{font-style:normal;font-size:11px;padding:1px 4px}
+.xdel{width:24px;height:24px;border:1px solid var(--line);flex:none;margin-left:auto}
+.spec-add{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:6px 10px;align-items:center;margin-top:10px}
+.filters{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr));gap:8px;margin:0 0 14px}
+@media (max-width:760px){.filters{grid-template-columns:1fr 1fr}.filters input{grid-column:1/-1}}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+@media (max-width:760px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{border:1px solid var(--line);padding:16px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi b{font-family:var(--display);font-size:32px;font-weight:400;font-variant-numeric:tabular-nums}
+.kpi span{font-size:14px;color:var(--muted)}
+.kpi.warn b{color:var(--alert)}
+.kpi:hover{border-color:var(--ink)}
+.famtable{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.famrow{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(80px,1fr) minmax(0,1.3fr);gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:15px}
+@media (max-width:620px){.famrow{grid-template-columns:1fr;gap:4px}}
+.famrow:hover b{text-decoration:underline}
+.bar{height:8px;background:var(--tile);border:1px solid var(--line);display:block}.bar i{display:block;height:100%;background:var(--orange)}
+.steps{padding-left:20px}.steps li{margin:6px 0;max-width:75ch}

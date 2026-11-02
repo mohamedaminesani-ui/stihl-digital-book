@@ -12,7 +12,8 @@ function d1(db) {
 }
 const own = new DatabaseSync(":memory:"), cat = new DatabaseSync(":memory:");
 cat.exec("CREATE TABLE docs (k TEXT PRIMARY KEY, v TEXT NOT NULL, ver INTEGER NOT NULL, t INTEGER NOT NULL)");
-cat.prepare("INSERT INTO docs VALUES (?,?,?,?)").run("structure", JSON.stringify({ families: [{ id: "chainsaw" }] }), 3, 1);
+cat.exec("CREATE TABLE history (id INTEGER PRIMARY KEY AUTOINCREMENT, k TEXT NOT NULL, action TEXT NOT NULL, avant TEXT, t INTEGER NOT NULL)");
+cat.prepare("INSERT INTO docs VALUES (?,?,?,?)").run("structure", JSON.stringify({ families: [{ id: "chainsaw", specs: [{ k: "weight" }] }] }), 3, 1);
 cat.prepare("INSERT INTO docs VALUES (?,?,?,?)").run("p:msa-220-1", JSON.stringify({ name: "MSA 220.1", family: "chainsaw" }), 1, 1);
 const env = { DB: d1(own), CATALOGUE: d1(cat), ADMIN_PASSWORD: "test", ASSETS: { fetch: () => new Response("asset") } };
 const req = (path, o = {}) => W.fetch(new Request("https://x.dev" + path, o), env);
@@ -28,3 +29,9 @@ r = await req("/api/doc?k=book:msa-220-c-b", { method: "PUT", headers: H, body: 
 r = await req("/api/history?k=book:msa-220-c-b", { headers: H }); console.log("historique:", (await r.json()).entries.length, "version(s) précédente(s)");
 r = await req("/api/doc?k=../etc", { method: "PUT", headers: H, body: "{}" }); console.log("clé invalide:", r.status);
 r = await req("/api/doc?k=book:x1y", { method: "PUT", headers: { Cookie: ck, Origin: "https://evil.dev" }, body: "{}" }); console.log("autre origine:", r.status);
+
+r = await req("/api/catalogue/spec", { method: "POST", headers: H, body: JSON.stringify({ catId: "msa-220-1", k: "weight", value: "3,6" }) });
+console.log("valeur ajoutée au catalogue:", r.status, JSON.parse(cat.prepare("SELECT v FROM docs WHERE k='p:msa-220-1'").get().v).specs, "historique catalogue:", cat.prepare("SELECT count(*) n FROM history").get().n);
+r = await req("/api/catalogue/field", { method: "POST", headers: H, body: JSON.stringify({ family: "chainsaw", tech: "battery", k: "chainSpeed", label: "Chain speed", unit: "m/s" }) });
+console.log("ligne ajoutée au catalogue:", r.status, JSON.parse(cat.prepare("SELECT v FROM docs WHERE k='structure'").get().v).families[0].specs.map((x) => x.k));
+r = await req("/api/catalogue/spec", { method: "POST", headers: H, body: JSON.stringify({ catId: "../x", k: "weight", value: "1" }) }); console.log("machine invalide:", r.status);

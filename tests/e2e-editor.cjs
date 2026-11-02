@@ -11,7 +11,7 @@ const ok = (c, m) => { console.log((c ? "OK   " : "ÉCHEC ") + m); if (!c) proce
   const p = await ctx.newPage();
   const errs = []; p.on("pageerror", (e) => errs.push(e.message));
   p.on("dialog", (d) => d.accept());
-  await p.goto(URL); await p.waitForSelector("#btnNew");
+  await p.goto(URL + "#/books"); await p.waitForSelector("#btnNew");
   // 1. copier l'exemple MH
   await p.click("[data-copy^='mh-610-710']"); await p.waitForSelector(".sheet");
   ok(/#\/book\//.test(p.url()), "copie de l'exemple MH ouverte dans l'éditeur");
@@ -30,7 +30,7 @@ const ok = (c, m) => { console.log((c ? "OK   " : "ÉCHEC ") + m); if (!c) proce
   ok(d1.suggestedFilename().endsWith(".pptx") && d2.suggestedFilename().endsWith(".pdf"), `exports ${d1.suggestedFilename()} / ${d2.suggestedFilename()}`);
   await p.screenshot({ path: path.join(OUT, "1-editeur-mh.png") });
   // 2. nouveau book hors catalogue
-  await p.goto(URL + "#/"); await p.click("#btnNew");
+  await p.goto(URL + "#/books"); await p.click("#btnNew");
   await p.click("[data-act=t-free]"); await p.fill("#fName", "MSA 220 C-B");
   await p.selectOption("#fFam", "chainsaw"); await p.selectOption("#fTech", "battery");
   await p.click("[data-act=create]"); await p.waitForSelector(".sheet");
@@ -49,7 +49,7 @@ const ok = (c, m) => { console.log((c ? "OK   " : "ÉCHEC ") + m); if (!c) proce
   await p.click("#edSave"); await p.waitForTimeout(300);
   // 3. bloc partagé batterie
   await p.goto(URL + "#/shared"); await p.click("[data-shsave=battery-reco]"); await p.waitForTimeout(300);
-  await p.goto(URL + "#/"); await p.click("a.btn[href*='msa-220-c-b']"); await p.waitForSelector(".sheet"); await p.waitForTimeout(600);
+  await p.goto(URL + "#/books"); await p.click("a.btn[href*='msa-220-c-b']"); await p.waitForSelector(".sheet"); await p.waitForTimeout(600);
   ok((await p.textContent("#preview")).includes("Toujours la séparer de la machine"), "bloc partagé « Recommandations batterie » repris dans le book");
   // 4. historique
   await p.click("#edMore"); await p.click("[data-act=hist]"); await p.waitForTimeout(300);
@@ -58,17 +58,35 @@ const ok = (c, m) => { console.log((c ? "OK   " : "ÉCHEC ") + m); if (!c) proce
   await p.screenshot({ path: path.join(OUT, "2-editeur-msa.png") });
   // 4b. machine du catalogue avec photo au format du Catalogue Builder ({ key, w, h })
   await p.route("**/cat-img/assets/**", (r) => r.fulfill({ path: "/home/claude/stihl-catalogue-2027/public/" + new (require("url").URL)(r.request().url()).pathname.replace(/^\/cat-img\//, ""), contentType: "image/jpeg" }));
-  await p.goto(URL + "#/"); await p.click("#btnNew"); await p.fill("#pickQ", "ASA");
+  await p.goto(URL + "#/books"); await p.click("#btnNew"); await p.fill("#pickQ", "ASA");
   await p.check("[data-mid='asa-20']"); await p.click("[data-act=create]"); await p.waitForSelector(".sheet"); await p.waitForTimeout(800);
   const prev = await p.textContent("#preview");
   ok(prev.includes("10.8") && prev.includes("0.98"), "ASA 20 : caractéristiques lues dans le catalogue");
   ok(await p.$$eval(".sheet img[alt='photo produit']", (a) => a.length) === 1, "ASA 20 : photo du catalogue affichée");
   ok(!(await p.$("#edForm .err")), "ASA 20 : aucune erreur d'affichage");
   await p.screenshot({ path: path.join(OUT, "2b-editeur-asa20.png") });
+  // 4c. caractéristiques modifiables + proposition d'envoi au catalogue
+  await p.fill("[data-cspec='asa-20|weight']", "1.05"); await p.dispatchEvent("[data-cspec='asa-20|weight']", "change");
+  await p.waitForSelector("#dlg[open] [data-act=book]");
+  ok((await p.textContent("#dlgBody")).includes("Ajouter aussi au catalogue"), "valeur modifiée : le site propose de l'ajouter au catalogue");
+  await p.click("#dlg [data-act=book]"); await p.waitForTimeout(600);
+  ok((await p.textContent("#preview")).includes("1.05") && (await p.textContent("#qcBox")).includes("Valeur modifiée dans ce book"), "valeur modifiée dans le book seulement, signalée au contrôle");
+  await p.fill("[data-cspec='asa-20|sound']", "71"); await p.dispatchEvent("[data-cspec='asa-20|sound']", "change");
+  await p.waitForSelector("#dlg[open] [data-act=cat]"); await p.click("#dlg [data-act=cat]"); await p.waitForTimeout(600);
+  ok(!(await p.$eval("[data-cspec='asa-20|sound']", (e) => e.classList.contains("edited"))) && (await p.textContent("#preview")).includes("71"), "valeur envoyée au catalogue (plus marquée comme modifiée)");
+  await p.click("#addSpec"); await p.fill("#asLab", "Vitesse de coupe"); await p.fill("#asUnit", "coupes/s"); await p.fill("#asEn", "Cutting speed"); await p.fill("#asV0", "2");
+  await p.click("#dlg [data-act=book]"); await p.waitForTimeout(600);
+  ok((await p.textContent("#preview")).includes("Vitesse de coupe"), "ligne de caractéristique ajoutée au book");
+  await p.click("#edSave"); await p.waitForTimeout(300);
+  // 4d. tableau de bord
+  await p.goto(URL + "#/"); await p.waitForSelector(".kpis"); await p.waitForTimeout(1500);
+  const kerr = await p.textContent("#kErr b");
+  ok(/^\d+$/.test(kerr), `tableau de bord : ${await p.$$eval(".kpi", (a) => a.length)} indicateurs, books avec défaut bloquant = ${kerr}`);
+  await p.screenshot({ path: path.join(OUT, "2c-tableau-de-bord.png"), fullPage: true });
   // 5. mobile
   const m = await (await b.newContext({ ...devices["iPhone 13"], acceptDownloads: true })).newPage();
   m.on("pageerror", (e) => errs.push(e.message));
-  await m.goto(URL); await m.waitForSelector("#btnNew");
+  await m.goto(URL + "#/books"); await m.waitForSelector("#btnNew");
   await m.click("[data-copy^='msa-220-c-b']"); await m.waitForSelector("#edForm");
   await m.screenshot({ path: path.join(OUT, "3-mobile-contenu.png") });
   await m.click(".mtabs [data-tab=prev]"); await m.waitForTimeout(500);

@@ -2,7 +2,8 @@
 // Site privé : toute donnée et toute photo demandent une session. Mot de passe : secret Cloudflare ADMIN_PASSWORD
 // (comptes nominatifs et rôles : étape 3).
 // Données propres : D1 « digital-book » (books versionnés, historique) + R2 « digital-book-photos ».
-// Données techniques : LUES dans la base du Catalogue Builder (binding CATALOGUE, lecture seule) et ses photos (CAT_PHOTOS).
+// Données techniques : LUES dans la base du Catalogue Builder (binding CATALOGUE) et ses photos (CAT_PHOTOS).
+// Le book n'écrit dans le catalogue que sur demande explicite (valeur ou ligne « ajoutée au catalogue »), avec contrôle de version.
 // Chaque enregistrement envoie la version lue ; si quelqu'un a modifié entre-temps : 409, rien n'est écrasé.
 
 const enc = new TextEncoder();
@@ -79,6 +80,38 @@ async function catalogue(env) {
     else out.machines.push({ id: r.k.slice(2), ver: r.ver, t: r.t, ...v });
   }
   return json(out);
+}
+
+// ---------- écriture dans le catalogue, à la demande (bouton « Ajouter au catalogue » de l'éditeur)
+// Même règle que le Catalogue Builder : version vérifiée (409 si modifié entre-temps) et ancienne version gardée dans son historique.
+async function majCatalogue(env, k, change) {
+  const cur = await env.CATALOGUE.prepare("SELECT v, ver FROM docs WHERE k=?").bind(k).first();
+  if (!cur) return json({ error: "introuvable dans le catalogue" }, 404);
+  const v = JSON.parse(cur.v), res = change(v);
+  if (res instanceof Response) return res;
+  const now = Date.now();
+  const r = await env.CATALOGUE.prepare("UPDATE docs SET v=?, ver=ver+1, t=? WHERE k=? AND ver=?").bind(JSON.stringify(v), now, k, cur.ver).run();
+  if (!r.meta.changes) return json({ error: "conflit" }, 409);
+  await env.CATALOGUE.prepare("INSERT INTO history (k, action, avant, t) VALUES (?, 'modif', ?, ?)").bind(k, cur.v, now).run();
+  return json({ ok: true, ver: cur.ver + 1, ...res });
+}
+async function catalogueValeur(req, env) {
+  const b = await lireJson(req, 4000);
+  const id = String(b.catId || ""), k = String(b.k || ""), val = String(b.value ?? "").trim();
+  if (!/^[a-z0-9-]{2,64}$/.test(id) || !/^[A-Za-z][A-Za-z0-9]{1,40}$/.test(k) || val.length > 80) return json({ error: "données invalides" }, 400);
+  return majCatalogue(env, "p:" + id, (v) => { v.specs = v.specs || {}; if (val) v.specs[k] = val; else delete v.specs[k]; return { value: val }; });
+}
+async function catalogueLigne(req, env) {
+  const b = await lireJson(req, 4000);
+  const fam = String(b.family || ""), tech = String(b.tech || ""), k = String(b.k || ""), label = String(b.label || "").trim(), unit = String(b.unit || "").trim();
+  if (!/^[a-z0-9-]{2,40}$/.test(fam) || !/^[a-z]{2,20}$/.test(tech) || !/^[A-Za-z][A-Za-z0-9]{1,40}$/.test(k) || !label || label.length > 60 || unit.length > 20) return json({ error: "données invalides" }, 400);
+  return majCatalogue(env, "structure", (st) => {
+    const f = (st.families || []).find((x) => x.id === fam);
+    if (!f) return json({ error: "famille introuvable" }, 404);
+    if (f.specs.some((x) => x.k === k)) return { k, existed: true };
+    f.specs.push({ k, label, unit, techs: [tech], table: true, card: true, header: [] });
+    return { k };
+  });
 }
 
 // ---------- documents (books, blocs partagés, réglages)
@@ -168,6 +201,8 @@ export default {
         return new Response("introuvable", { status: 404 });
       }
       if (p === "/api/catalogue" && m === "GET") return await catalogue(env);
+      if (p === "/api/catalogue/spec" && m === "POST") return await catalogueValeur(req, env);
+      if (p === "/api/catalogue/field" && m === "POST") return await catalogueLigne(req, env);
       if (p === "/api/data" && m === "GET") return await toutLire(env);
       if (p === "/api/doc") {
         const k = url.searchParams.get("k") || ""; if (!KEY_RE.test(k)) return json({ error: "clé invalide" }, 400);

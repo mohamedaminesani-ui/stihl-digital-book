@@ -21,6 +21,9 @@ export function createApi(mode) {
     remove: (k, ver) => req(`/api/doc?k=${encodeURIComponent(k)}&ver=${ver}`, { method: "DELETE" }),
     history: (k) => req(`/api/history?k=${encodeURIComponent(k)}`),
     upload: async (blob) => (await req("/api/img", { method: "POST", headers: { "Content-Type": blob.type }, body: blob })).key,
+    // écriture dans le Catalogue Builder (seulement sur demande)
+    catSpec: (catId, k, value) => req("/api/catalogue/spec", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ catId, k, value }) }),
+    catField: (family, tech, k, label, unit) => req("/api/catalogue/field", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ family, tech, k, label, unit }) }),
   };
   // démonstration : documents gardés dans ce navigateur seulement
   const read = () => { try { return JSON.parse(localStorage.getItem(LOCAL) || "{}"); } catch { return {}; } };
@@ -40,6 +43,9 @@ export function createApi(mode) {
     remove: async (k) => { delete mem[k]; write(mem); return { ok: true }; },
     history: async (k) => ({ entries: mem[k]?.hist || [] }),
     upload: async (blob) => await new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(blob); }),
+    // démonstration : le « catalogue » est une copie locale, modifiée en mémoire seulement
+    catSpec: async (_id, _k, value) => ({ ok: true, value }),
+    catField: async (_f, _t, k) => ({ ok: true, k }),
   };
 }
 
