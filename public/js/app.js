@@ -169,8 +169,13 @@ function openEditor(id) {
   $("edPdf").onclick = () => exporter("pdf");
   $("edMore").onclick = moreDialog;
   document.querySelectorAll(".mtabs .tab").forEach((t) => (t.onclick = () => { document.querySelectorAll(".mtabs .tab").forEach((x) => x.classList.toggle("on", x === t)); document.querySelector(".ed").dataset.show = t.dataset.tab; fit(); }));
-  renderForm();
+  try { renderForm(); } catch (err) { showError(err); return; }
   refresh();
+}
+function showError(err) {
+  console.error(err);
+  const box = document.getElementById("edForm") || $("view");
+  box.insertAdjacentHTML("afterbegin", `<p class="err">Erreur d'affichage : ${esc(err.message)}. Envoie une capture de ce message pour correction.</p>`);
 }
 
 function markDirty() {
@@ -371,8 +376,11 @@ function addMachineDialog() {
 // ----- aperçu et contrôle
 async function refresh() {
   if (!S.ed) return;
-  const book = resolveBook(S.ed.book, S.cat, sharedDocs());
-  const res = await S.studio.build(book, S.cat);
+  let book, res;
+  try {
+    book = resolveBook(S.ed.book, S.cat, sharedDocs());
+    res = await S.studio.build(book, S.cat);
+  } catch (err) { showError(err); return; }
   if (!S.ed) return;
   S.ed.res = res; S.ed.resolved = book;
   const lvl = (n) => { const l = res.issues.filter((x) => x.page === n).map((x) => x.level); return l.includes("error") ? "err" : l.includes("warn") ? "warn" : "ok"; };

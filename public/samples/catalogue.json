@@ -303,6 +303,149 @@
       "card": true
      }
     ]
+   },
+   {
+    "id": "hedgetrimmer",
+    "name": "Hedge trimmer & secateurs",
+    "noun": "HEDGE TRIMMER",
+    "techs": [
+     "battery",
+     "petrol"
+    ],
+    "specs": [
+     {
+      "k": "engineType",
+      "label": "Engine type",
+      "unit": "",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "motor",
+      "label": "Motor",
+      "unit": "",
+      "techs": [
+       "battery",
+       "electric"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "displacement",
+      "label": "Displacement",
+      "unit": "cm³",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "power",
+      "label": "Engine power",
+      "unit": "kW/hp",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "ratedOutput",
+      "label": "Rated output",
+      "unit": "W",
+      "techs": [
+       "electric"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "voltage",
+      "label": "Rated voltage",
+      "unit": "V",
+      "techs": [
+       "battery",
+       "electric"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "strokeRate",
+      "label": "Stroke rate",
+      "unit": "spm",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "cuttingLength",
+      "label": "Cutting length",
+      "unit": "mm",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "toothSpacing",
+      "label": "Tooth spacing",
+      "unit": "mm",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "bladeOpening",
+      "label": "Max. blade opening",
+      "unit": "mm",
+      "techs": [
+       "battery"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "sound",
+      "label": "Sound pressure level",
+      "unit": "dB(A)",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "runtime",
+      "label": "Operating time*",
+      "unit": "min",
+      "techs": [
+       "battery"
+      ],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "weight",
+      "label": "Weight",
+      "unit": "kg",
+      "techs": [],
+      "table": true,
+      "card": true
+     },
+     {
+      "k": "fuelTank",
+      "label": "Fuel tank capacity",
+      "unit": "l",
+      "techs": [
+       "petrol"
+      ],
+      "table": true,
+      "card": true
+     }
+    ]
    }
   ]
  },
@@ -335,6 +478,29 @@
    "specs": {},
    "images": {
     "main": null
+   }
+  },
+  {
+   "id": "asa-20",
+   "name": "ASA 20",
+   "family": "hedgetrimmer",
+   "tech": "battery",
+   "specs": {
+    "motor": "DC",
+    "voltage": "10.8",
+    "bladeOpening": "25",
+    "sound": "70",
+    "weight": "0.98"
+   },
+   "images": {
+    "main": {
+     "key": "assets/2026/products/asa-20.jpg",
+     "thumb": null,
+     "w": 1014,
+     "h": 441,
+     "type": "image/jpeg"
+    },
+    "secondary": []
    }
   }
  ]

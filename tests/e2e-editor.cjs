@@ -56,6 +56,15 @@ const ok = (c, m) => { console.log((c ? "OK   " : "ÉCHEC ") + m); if (!c) proce
   ok((await p.$$("#dlgBody .hist li")).length >= 1, "historique : version précédente disponible");
   await p.click("[data-act=close]");
   await p.screenshot({ path: path.join(OUT, "2-editeur-msa.png") });
+  // 4b. machine du catalogue avec photo au format du Catalogue Builder ({ key, w, h })
+  await p.route("**/cat-img/assets/**", (r) => r.fulfill({ path: "/home/claude/stihl-catalogue-2027/public/" + new (require("url").URL)(r.request().url()).pathname.replace(/^\/cat-img\//, ""), contentType: "image/jpeg" }));
+  await p.goto(URL + "#/"); await p.click("#btnNew"); await p.fill("#pickQ", "ASA");
+  await p.check("[data-mid='asa-20']"); await p.click("[data-act=create]"); await p.waitForSelector(".sheet"); await p.waitForTimeout(800);
+  const prev = await p.textContent("#preview");
+  ok(prev.includes("10.8") && prev.includes("0.98"), "ASA 20 : caractéristiques lues dans le catalogue");
+  ok(await p.$$eval(".sheet img[alt='photo produit']", (a) => a.length) === 1, "ASA 20 : photo du catalogue affichée");
+  ok(!(await p.$("#edForm .err")), "ASA 20 : aucune erreur d'affichage");
+  await p.screenshot({ path: path.join(OUT, "2b-editeur-asa20.png") });
   // 5. mobile
   const m = await (await b.newContext({ ...devices["iPhone 13"], acceptDownloads: true })).newPage();
   m.on("pageerror", (e) => errs.push(e.message));

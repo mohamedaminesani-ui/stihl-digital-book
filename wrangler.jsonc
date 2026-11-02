@@ -13,6 +13,8 @@
     { "binding": "PHOTOS", "bucket_name": "digital-book-photos" },
     { "binding": "CAT_PHOTOS", "bucket_name": "catalogue-2027-photos" }
   ],
+  // site du Catalogue Builder : photos reprises du catalogue 2026 (assets/2026/products/…)
+  "services": [ { "binding": "CATALOGUE_SITE", "service": "stihl-catalogue-2027" } ],
   "observability": { "enabled": true },
   "keep_vars": true
 }

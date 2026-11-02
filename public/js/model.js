@@ -44,11 +44,18 @@ export function emptyBook({ machines, lang = "fr", family, tech }) {
   };
 }
 
+// Photo du catalogue : fiche { key, w, h, … } (ou ancien format : texte) → clé « cat:<chemin> »
+// assets/2026/products/… = photos reprises du catalogue 2026 (site du catalogue) ; img/… = photos envoyées (R2 du catalogue)
+export function catImageKey(main) {
+  const k = typeof main === "string" ? main : main && typeof main === "object" ? main.key : null;
+  if (!k) return null;
+  return k.startsWith("cat:") ? k : "cat:" + k;
+}
 // Machine du catalogue → forme attendue par le moteur
 export function catMachine(cat, id) {
   const m = (cat?.machines || []).find((x) => x.id === id);
   if (!m) return null;
-  return { name: m.name, family: m.family, tech: m.tech, specs: m.specs || {}, images: { main: m.images?.main ? (m.images.main.startsWith("cat:") ? m.images.main : "cat:" + m.images.main) : null }, source: "catalogue", catId: id };
+  return { name: m.name, family: m.family, tech: m.tech, specs: m.specs || {}, images: { main: catImageKey(m.images?.main) }, source: "catalogue", catId: id };
 }
 
 // book enregistré → book complet pour le moteur (machines du catalogue relues, blocs partagés appliqués)

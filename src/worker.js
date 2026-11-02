@@ -10,6 +10,8 @@ const SESSION_MS = 14 * 86400e3, MAX_DOC = 600000, MAX_IMG = 30 * 1024 * 1024;
 const IMG_TYPES = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 const KEY_RE = /^(settings|book:[a-z0-9-]{3,80}|shared:[a-z0-9-]{3,64})$/;
 const IMG_RE = /^img\/[a-f0-9]{32}\.(png|jpg|webp)$/, CAT_IMG_RE = /^img\/[a-f0-9]{32}\.(png|jpg|webp|svg)$/;
+const CAT_ASSET_RE = /^assets\/[a-z0-9_\/.-]{1,120}\.(png|jpg|jpeg|webp)$/i;
+const CATALOGUE_SITE = "https://stihl-catalogue-2027.mohamedaminesani.workers.dev";
 
 const hex = (b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
 const alea = (n) => hex(crypto.getRandomValues(new Uint8Array(n)));
@@ -134,6 +136,16 @@ async function lireImage(bucket, key) {
   return new Response(o.body, { headers: h });
 }
 
+// photos reprises du catalogue 2026 : fichiers publics du site Catalogue Builder (liaison de service, sinon adresse publique)
+async function assetCatalogue(env, key) {
+  const u = `${CATALOGUE_SITE}/${key}`;
+  const r = env.CATALOGUE_SITE ? await env.CATALOGUE_SITE.fetch(new Request(u)) : await fetch(u);
+  if (!r.ok) return new Response("introuvable", { status: 404 });
+  const ct = r.headers.get("Content-Type") || "";
+  if (!ct.startsWith("image/")) return new Response("introuvable", { status: 404 });
+  return new Response(r.body, { headers: { "Content-Type": ct, "Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff" } });
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url), p = url.pathname, m = req.method;
@@ -149,7 +161,12 @@ export default {
       if (!(await session(req, env))) return json({ error: "connexion requise" }, 401);
 
       if (p.startsWith("/img/")) { const key = p.slice(1); return IMG_RE.test(key) ? await lireImage(env.PHOTOS, key) : new Response("introuvable", { status: 404 }); }
-      if (p.startsWith("/cat-img/")) { const key = p.slice(9); return CAT_IMG_RE.test(key) ? await lireImage(env.CAT_PHOTOS, key) : new Response("introuvable", { status: 404 }); }
+      if (p.startsWith("/cat-img/")) {
+        const key = p.slice(9);
+        if (CAT_IMG_RE.test(key)) return await lireImage(env.CAT_PHOTOS, key);
+        if (CAT_ASSET_RE.test(key) && !key.includes("..")) return await assetCatalogue(env, key);
+        return new Response("introuvable", { status: 404 });
+      }
       if (p === "/api/catalogue" && m === "GET") return await catalogue(env);
       if (p === "/api/data" && m === "GET") return await toutLire(env);
       if (p === "/api/doc") {
